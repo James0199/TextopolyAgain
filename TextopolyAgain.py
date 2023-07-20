@@ -18,6 +18,7 @@ def playerSetup():
         if not int(playerCount) in range(2, 8+1):
             print("Try again")
             continue
+        playerCount = int(playerCount)
         break
     
     # Creating player data
@@ -25,7 +26,11 @@ def playerSetup():
     for count in range(1, playerCount+1):
         playerList.update({count: Player(0, 1500, [], {"Jail": False, "JailOutFree": False, "Doubles": 0})})
     
-    return playerList
+    return playerList, [i for i in range(1, playerCount+1)]
 
 # Setting up players and player data
-players = playerSetup()
+players, remainingPlayers = playerSetup()
+
+# Load squares data
+with open("squares.txt", "r") as squaresFile:
+    squares = eval(squaresFile.read())
