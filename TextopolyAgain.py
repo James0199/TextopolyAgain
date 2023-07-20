@@ -7,6 +7,25 @@ class Player:
         self.balance = balance
         self.properties = properties
         self.extras = extras
+    
+    def addBalance(self, amount):
+        self.balance += amount
+
+    def removeBalance(self, amount):
+        self.balance -= amount
+
+    def advance(self, moves):
+        if self.location + moves > 39:
+            self.location = (self.location + moves) - 40
+            print("You passed Go, recieve $200")
+            self.balance += 200
+            return
+        self.location += moves
+    
+    def goToJail(self):
+        self.extras["jail"] = True
+        self.location = 10
+
 
 def playerSetup():
     # Setting player count
@@ -24,7 +43,7 @@ def playerSetup():
     # Creating player data
     playerList = {}
     for count in range(1, playerCount+1):
-        playerList.update({count: Player(0, 1500, [], {"Jail": False, "JailOutFree": False, "Doubles": 0})})
+        playerList.update({count: Player(0, 1500, [], {"Jail": False, "JailOutFree": False})})
     
     return playerList, playerCount, [i for i in range(1, playerCount+1)]
 
@@ -38,13 +57,31 @@ with open("squares.txt", "r") as squaresFile:
 
 print("Press enter to roll dice")
 
+doubleRolls = 0
 while True:
-    doubleRoll = False
+    print(f"\nCurrent balance: {players[currentP].balance}")
+    print(f"Current square:\n{players[currentP].location} - {squares[players[currentP].location]['name']}")
 
-    input("\nRoll dice")
+    input("\nRoll dice >")
     rollOne, rollTwo = (randint(1, 6), randint(1, 6))
-    print(f"1st: {rollOne}, 2nd: {rollTwo}")
+    print(f"1st: {rollOne}, 2nd: {rollTwo} = {rollOne + rollTwo}")
 
     if rollOne == rollTwo:
         print("Doubles!")
-        doubleRoll = True
+        doubleRolls += 1
+    
+    players[currentP].advance(rollOne + rollTwo)
+    print(f"\nNew square:\n{players[currentP].location} - {squares[players[currentP].location]['name']}")
+
+    input("\nEnter to Continue...")
+
+    if doubleRolls == 0:
+        if currentP == max(remainingPlayers):
+            currentP = min(remainingPlayers)
+            continue
+        currentP = remainingPlayers[remainingPlayers.index(currentP) + 1]
+        continue
+    elif doubleRolls >= 3:
+        print("You rolled 3 consecutive doubles!\n"
+              "Go to Jail.")
+        players[currentP].goToJail()
