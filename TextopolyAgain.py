@@ -26,11 +26,25 @@ def playerSetup():
     for count in range(1, playerCount+1):
         playerList.update({count: Player(0, 1500, [], {"Jail": False, "JailOutFree": False, "Doubles": 0})})
     
-    return playerList, [i for i in range(1, playerCount+1)]
+    return playerList, playerCount, [i for i in range(1, playerCount+1)]
 
 # Setting up players and player data
-players, remainingPlayers = playerSetup()
+players, playerCount, remainingPlayers = playerSetup()
+currentP = 1
 
 # Load squares data
 with open("squares.txt", "r") as squaresFile:
     squares = eval(squaresFile.read())
+
+print("Press enter to roll dice")
+
+while True:
+    doubleRoll = False
+
+    input("\nRoll dice")
+    rollOne, rollTwo = (randint(1, 6), randint(1, 6))
+    print(f"1st: {rollOne}, 2nd: {rollTwo}")
+
+    if rollOne == rollTwo:
+        print("Doubles!")
+        doubleRoll = True
