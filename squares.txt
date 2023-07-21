@@ -121,7 +121,7 @@
         }
     },
     10: {
-        'name': 'Just Visiting - Jail',
+        'name': 'Just Visiting/Jail',
         'type': 'corner',
     },
     11: {
