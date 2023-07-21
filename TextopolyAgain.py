@@ -2,11 +2,16 @@ from random import randint
 from time import sleep
 
 class Player:
-    def __init__(self, location, balance, properties, extras):
+    def __init__(self, location: int,
+                 balance: int,
+                 properties: list,
+                 jail: bool,
+                 jail_out_free: bool):
         self.location = location
         self.balance = balance
         self.properties = properties
-        self.extras = extras
+        self.jail = jail
+        self.jail_out_free = jail_out_free
     
     def print_stats(self, player_index):
         print(f"\nPlayer {player_index}'s turn"
@@ -28,7 +33,7 @@ class Player:
         self.location += moves
     
     def go_to_jail(self):
-        self.extras["jail"] = True
+        self.jail = True
         self.location = 10
         print("You have been sent to Jail")
 
@@ -44,12 +49,14 @@ class Player:
             double_rolls = 0
         
         self.advance(rollOne + rollTwo)
-        print(f"\nNew square:\n{players[player_index].location} - {squares[players[player_index].location]['name']}")
+        print(f"\nNew square:\n{players[player_index].location} - "
+              f"{squares[players[player_index].location]['name']}")
         
         return double_rolls
     
-    def inJail(self, inJailTurns):
+    def in_jail(self, in_jail_turns):
         print("You are in Jail")
+        return in_jail_turns
 
 def playerSetup():
     # Setting player count
@@ -67,7 +74,8 @@ def playerSetup():
     # Creating player data
     player_list = {}
     for count in range(1, player_count+1):
-        player_list.update({count: Player(0, 1500, [], {"jail": False, "jailOutFree": False})})
+        # Player(location, balance, properties, jail, jail_out_free)
+        player_list.update({count: Player(0, 1500, [], False, False)})
     
     return player_list, [i for i in range(1, player_count+1)]
 
@@ -78,7 +86,7 @@ with open("squares.txt", "r") as squares_file:
 # Setting up player data and game data
 players, remaining_players = playerSetup()
 player_index = 1
-double_rolls = 0; inJailTurns = 0
+double_rolls = 0; in_jailTurns = 0
 current_player = players[player_index]
 
 print("Press enter to roll dice")
@@ -86,8 +94,8 @@ print("Press enter to roll dice")
 while True:
     current_player.print_stats(player_index)
 
-    if current_player.extras["jail"] == True:
-        inJailTurns = current_player.inJail()
+    if current_player.jail == True:
+        in_jailTurns = current_player.in_jail()
     else:
         double_rolls = current_player.normal_turn(double_rolls)
 
