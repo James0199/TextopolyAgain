@@ -2,6 +2,7 @@ from Models.game import Game
 from Models.player import Player
 from Models.square import Square
 
+# I, jamie, the creator, currently cannot understand the following code
 
 def load_squares() -> dict[int, Square]:
     squares_list: dict[int, Square] = {}
