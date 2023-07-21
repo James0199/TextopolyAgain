@@ -8,8 +8,8 @@ class Player:
         self.properties = properties
         self.extras = extras
     
-    def printStats(self, currentPlayer):
-        print(f"\nPlayer {currentPlayer}'s turn"
+    def printStats(self, playerIndex):
+        print(f"\nPlayer {playerIndex}'s turn"
               f"\nCurrent balance: {self.balance}"
               f"Current square:\n{self.location} - {squares[self.location]['name']}")
     
@@ -44,13 +44,12 @@ class Player:
             doubleRolls = 0
         
         self.advance(rollOne + rollTwo)
-        print(f"\nNew square:\n{players[currentP].location} - {squares[players[currentP].location]['name']}")
+        print(f"\nNew square:\n{players[playerIndex].location} - {squares[players[playerIndex].location]['name']}")
         
         return doubleRolls
     
     def inJail(self, inJailTurns):
         print("You are in Jail")
-
 
 def playerSetup():
     # Setting player count
@@ -70,39 +69,41 @@ def playerSetup():
     for count in range(1, playerCount+1):
         playerList.update({count: Player(0, 1500, [], {"jail": False, "jailOutFree": False})})
     
-    return playerList, playerCount, [i for i in range(1, playerCount+1)]
+    return playerList, [i for i in range(1, playerCount+1)]
 
-# Setting up players and player data
-players, playerCount, remainingPlayers = playerSetup()
-currentP = 1
-doubleRolls = 0
-inJailTurns = 0
-
-# Load squares data
+# Setting up external files
 with open("squares.txt", "r") as squaresFile:
     squares = eval(squaresFile.read())
+
+# Setting up player data and game data
+players, remainingPlayers = playerSetup()
+playerIndex = 1
+doubleRolls = 0; inJailTurns = 0
+currentPlayer = players[playerIndex]
 
 print("Press enter to roll dice")
 
 while True:
-    players[currentP].printStats(currentP)
+    currentPlayer.printStats(playerIndex)
 
-    if players[currentP].extras["jail"] == True:
-        inJailTurns = players[currentP].inJail()
+    if currentPlayer.extras["jail"] == True:
+        inJailTurns = currentPlayer.inJail()
     else:
-        doubleRolls = players[currentP].normalTurn(doubleRolls)
+        doubleRolls = currentPlayer.normalTurn(doubleRolls)
 
     input("\nEnter to Continue...")
 
-    if players[currentP].location == 30:
+    if currentPlayer.location == 30:
         print("You landed on Go to Jail!")
-        players[currentP].goToJail()
+        currentPlayer.goToJail()
     elif doubleRolls >= 3:
         print("You rolled 3 consecutive doubles!")
-        players[currentP].goToJail()
+        currentPlayer.goToJail()
     
-    if currentP == max(remainingPlayers):
-        currentP = min(remainingPlayers)
+    if playerIndex == max(remainingPlayers):
+        playerIndex = min(remainingPlayers)
         continue
-    currentP = remainingPlayers[remainingPlayers.index(currentP) + 1]
+
+    playerIndex = remainingPlayers[remainingPlayers.index(playerIndex) + 1]
+    currentPlayer = players[playerIndex]
     
