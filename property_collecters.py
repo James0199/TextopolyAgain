@@ -1,14 +1,15 @@
 from Models.Property import Street, Tax, Utility, Railroad, ComChest, Chance, Corner
 
 
-def load_squares():
+def load_squares() -> dict[int, Street | Tax | Utility | Railroad | ComChest | Chance | Corner]:
     with open("squares.txt", "r") as squaresFile:
         squares = eval(squaresFile.read())
 
-    all_squares = []
-
+    all_squares: dict[int, Street | Tax | Utility | Railroad | ComChest | Chance | Corner] = {}
+    count = 0
     for square in squares:
-        all_squares.append(get_type(squares[square]))
+        all_squares[count] = get_type(squares[square])
+        count += 1
 
     return all_squares
 

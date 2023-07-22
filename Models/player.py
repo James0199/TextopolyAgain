@@ -5,15 +5,27 @@ class Player:
 
     def __init__(
             self,
-            location: dict[int, Street | Tax | Utility | Railroad, ComChest, Chance, Corner],
+            location: Street | Tax | Utility | Railroad | ComChest | Chance | Corner,
             balance: int,
-            properties: dict[int, Street | Tax | Utility | Railroad, ComChest, Chance, Corner],
-            extras: dict[str, str]
+            properties: dict[int, Street | Tax | Utility | Railroad | ComChest | Chance | Corner] | None,
+            extras: dict[str, str] | None
     ):
         self.location = location
         self.balance = balance
         self.properties = properties
         self.extras = extras
+
+    def location(self) -> Street | Tax | Utility | Railroad | ComChest | Chance | Corner:
+        return self.location.name
+
+    def balance(self):
+        return self.balance
+
+    def properties(self):
+        return self.properties
+
+    def extras(self):
+        return self.extras
 
     def add_balance(self, value):
         self.balance += value

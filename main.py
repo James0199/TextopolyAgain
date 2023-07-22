@@ -3,8 +3,10 @@ from Models.player import Player
 from property_collecters import load_squares
 
 
-def start():
+def start() -> Game:
     print("Game is initialising...")
+
+    all_squares = load_squares()
 
     player_list: list[Player] = []
 
@@ -17,8 +19,27 @@ def start():
         except ValueError:
             print("Enter a valid number")
 
+    for count in range(0, player_count):
+        player_list.append(
+            Player(
+                location=all_squares[0],
+                balance=0,
+                properties=None,
+                extras=None
+            )
+        )
 
-all_squares = load_squares()
+    return Game(
+        players=player_list,
+        squares=all_squares
+    )
 
-for square in all_squares:
-    print(square.name)
+
+game = start()
+players = game.players
+squares = game.squares
+count = 1
+
+for player in players:
+    print(f"Player {count} is at: {player.location.name} with balance {player.balance}")
+    count += 1

@@ -6,11 +6,16 @@ class Game:
 
     def __init__(self,
                  players: list[Player],
-                 squares: dict[int, Street | Tax | Utility | Railroad, ComChest, Chance, Corner]
+                 squares: dict[int, Street | Tax | Utility | Railroad | ComChest | Chance | Corner]
                  ):
-        self.players = players
-        self.squares = squares
+        self._players = players
+        self._squares = squares
 
-    def start(self):
-        print("Game is initialising....")
+    @property
+    def players(self):
+        return self._players
+
+    @property
+    def squares(self):
+        return self._squares
 
