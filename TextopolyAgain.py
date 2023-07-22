@@ -27,8 +27,4 @@ while True:
 
     input("\nEnter to Continue...")
 
-    if player_num == max(remaining_players):
-        player_num = min(remaining_players)
-        continue
-    player_num = remaining_players[remaining_players.index(player_num) + 1]
-    
+    player_num = turnAdvance(player_num, remaining_players)

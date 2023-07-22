@@ -107,3 +107,8 @@ def file_setup():
         squares = eval(squares_file.read())
 
     return squares
+
+def turnAdvance(player_num, remaining_players):
+    if player_num == max(remaining_players):
+        return min(remaining_players)
+    return remaining_players[remaining_players.index(player_num) + 1]
