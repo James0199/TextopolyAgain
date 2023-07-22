@@ -6,7 +6,7 @@
     1: {
         'name': 'Mediterranean Avenue',
         'price': 60,
-        'type': 'property',
+        'type': 'street',
         'color': 'brown',
         'owner': 'none',
         'improvement_lvl': 0,
@@ -496,8 +496,8 @@
     },
     38: {
         'name': 'Luxury tax',
-        'price': 100,
         'type': 'tax',
+        'price': 100,
     },
     39: {
         'name': 'Boardwalk',
