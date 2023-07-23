@@ -6,15 +6,19 @@ class Player:
                  balance: int,
                  properties: list,
                  jail: bool,
-                 jail_out_free: bool):
+                 jail_out_free: bool,
+                 in_jail_turns: int,
+                 doubles: int,):
         self.location = location
         self.balance = balance
         self.properties = properties
         self.jail = jail
         self.jail_out_free = jail_out_free
+        self.in_jail_turns = in_jail_turns
+        self.doubles = doubles
     
 
-    def normal_turn(self, double_rolls, squares):
+    def normal_turn(self, squares):
 
         input("\nRoll dice >")
         rollOne, rollTwo = (randint(1, 6), randint(1, 6))
@@ -22,22 +26,19 @@ class Player:
 
         if rollOne == rollTwo:
             print("Doubles!")
-            double_rolls += 1
+            self.doubles += 1
         else:
-            double_rolls = 0
+            self.doubles = 0
         
         input()
         self.advance(rollOne + rollTwo)
         current_square = squares[self.location]
         print(f"New square:\n{self.location} - "
               f"{current_square['name']}")
-        
-        return double_rolls
     
-    def in_jail(self, in_jail_turns):
+    def in_jail(self):
         print("You are in Jail")
 
-        return in_jail_turns
 
 
     def print_stats(self, player_num, current_square):
@@ -64,11 +65,11 @@ class Player:
         self.location = 10
         print("You have been sent to Jail")
 
-    def jail_conditions(self, double_rolls):
+    def jail_conditions(self):
         if self.location == 30:
             print("\nYou landed on Go to Jail!")
             self.go_to_jail()
-        elif double_rolls >= 3:
+        elif self.doubles >= 3:
             print("\nYou rolled 3 consecutive doubles!")
             self.go_to_jail()
 
@@ -89,8 +90,8 @@ def player_setup():
     # Creating player data
     player_list = {}
     for count in range(1, player_count+1):
-        # Player(location, balance, properties, jail, jail_out_free)
-        player_list.update({count: Player(0, 1500, [], False, False)})
+        # Player(location, balance, properties, jail, jail_out_free, in_jail_turns, doubles)
+        player_list.update({count: Player(0, 1500, [], False, False, 0, 0)})
     
     return player_list, [i for i in range(1, player_count+1)]
 
@@ -111,4 +112,5 @@ def file_setup():
 def turnAdvance(player_num, remaining_players):
     if player_num == max(remaining_players):
         return min(remaining_players)
+    
     return remaining_players[remaining_players.index(player_num) + 1]
