@@ -113,7 +113,6 @@ class Player:
 
 
 def player_setup():
-    # Setting player count
     while True:
         player_count = input("\nHow many players?(2-8):")
         if not player_count.isdigit():
@@ -125,7 +124,6 @@ def player_setup():
         player_count = int(player_count)
         break
     
-    # Creating player data
     player_list = {}
     for count in range(1, player_count+1):
         # Player(location, balance, properties, jail, jail_out_free, in_jail_turns, doubles)

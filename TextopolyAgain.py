@@ -7,11 +7,9 @@ input("\nWelcome to Textopoly!\n"
       "\nIf you don't choose a valid option while in jail,"
       "\nYou'll automatically pay $50 bail.")
 
-# File and player setup
 squares = file_setup()
 players, remaining_players = player_setup()
 
-# Initialize variables
 player_num = 1
 
 while True:
