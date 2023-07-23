@@ -18,27 +18,76 @@ class Player:
         self.doubles = doubles
     
 
-    def normal_turn(self, squares):
+    def normal_turn(self, squares, jail_doubles, roll_one=0, roll_two=0):
+        if not jail_doubles:
+            roll_one, roll_two = dice_roll()
+            print(f"1st: {roll_one}, 2nd: {roll_two} = {roll_one + roll_two}")
 
-        input("\nRoll dice >")
-        rollOne, rollTwo = (randint(1, 6), randint(1, 6))
-        print(f"1st: {rollOne}, 2nd: {rollTwo} = {rollOne + rollTwo}")
-
-        if rollOne == rollTwo:
-            print("Doubles!")
-            self.doubles += 1
-        else:
-            self.doubles = 0
+            if roll_one == roll_two:
+                print("Doubles!")
+                self.doubles += 1
+            else:
+                self.doubles = 0
         
         input()
-        self.advance(rollOne + rollTwo)
+        self.advance(roll_one + roll_two)
         current_square = squares[self.location]
         print(f"New square:\n{self.location} - "
               f"{current_square['name']}")
     
-    def in_jail(self):
-        print("You are in Jail")
 
+    def go_to_jail(self):
+        self.jail = True
+        self.location = 10
+        print("You have been sent to Jail")
+
+    def jail_conditions(self):
+        if self.location == 30:
+            print("\nYou landed on Go to Jail!")
+            self.go_to_jail()
+        elif self.doubles >= 3:
+            print("\nYou rolled 3 consecutive doubles!")
+            self.go_to_jail()
+
+    def in_jail(self, squares):
+        print("You're in Jail\n")
+        if self.in_jail_turns <= 3:
+            print("(r) _R_oll doubles")
+        if self.jail_out_free:
+            print("(f) Use Get Out Of Jail _F_ree card")
+        print("([b]) Pay $50 _b_ail")
+        option = input("Enter choice:")
+
+        self.jail_options(option, squares)
+    
+    def jail_options(self, option, squares):
+        if option == "r" and self.in_jail_turns <= 3:
+            roll_one, roll_two = dice_roll()
+            print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
+
+            if roll_one == roll_two:
+                print("You rolled a double!"
+                      "\nYou've been released")
+                self.get_out_of_jail(squares, (False, roll_one, roll_two))
+                return
+            print("You didn't roll a double"
+                  "\nYou'll remain in Jail")
+            return
+        
+        elif option == "f" and self.jail_out_free:
+            print("You have used your Get Out Of Jail Free Card")
+            self.get_out_of_jail(squares, False)
+            return
+        
+        print("You've paid $50 bail to get out of jail")
+        self.balance -= 50
+        self.get_out_of_jail(squares, False)
+        return
+
+    def get_out_of_jail(self, squares, double_roll=(False, 0, 0)):
+        jail_doubles, roll_one, roll_two = double_roll
+        self.jail = False
+        self.normal_turn(squares, jail_doubles, roll_one, roll_two)
 
 
     def print_stats(self, player_num, current_square):
@@ -59,19 +108,6 @@ class Player:
 
     def remove_balance(self, amount):
         self.balance -= amount
-    
-    def go_to_jail(self):
-        self.jail = True
-        self.location = 10
-        print("You have been sent to Jail")
-
-    def jail_conditions(self):
-        if self.location == 30:
-            print("\nYou landed on Go to Jail!")
-            self.go_to_jail()
-        elif self.doubles >= 3:
-            print("\nYou rolled 3 consecutive doubles!")
-            self.go_to_jail()
 
 
 def player_setup():
@@ -114,3 +150,9 @@ def turnAdvance(player_num, remaining_players):
         return min(remaining_players)
     
     return remaining_players[remaining_players.index(player_num) + 1]
+
+def dice_roll():
+    input("\nRoll dice >")
+    roll_one, roll_two = (randint(1, 6), randint(1, 6))
+
+    return roll_one, roll_two
