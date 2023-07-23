@@ -18,10 +18,12 @@ class Player:
         self.doubles = doubles
     
 
-    def normal_turn(self, squares, jail_doubles, roll_one=0, roll_two=0):
+    def normal_turn(self, squares,
+                    jail_doubles, roll_one=0, roll_two=0):
         if not jail_doubles:
             roll_one, roll_two = dice_roll()
-            print(f"1st: {roll_one}, 2nd: {roll_two} = {roll_one + roll_two}")
+            print(f"1st: {roll_one}, 2nd: {roll_two} = "
+                  f"{roll_one + roll_two}")
 
             if roll_one == roll_two:
                 print("Doubles!")
