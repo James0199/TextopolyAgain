@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, choice
 from os import path
 
 class Player:
@@ -18,25 +18,74 @@ class Player:
         self.doubles = doubles
     
 
-    def normal_turn(self, squares,
-                    jail_doubles, roll_one=0, roll_two=0):
+    def normal_turn(self, jail_doubles,
+                    roll_one=0, roll_two=0):
         if not jail_doubles:
             roll_one, roll_two = dice_roll()
             print(f"1st: {roll_one}, 2nd: {roll_two} = "
                   f"{roll_one + roll_two}")
 
-            if roll_one == roll_two:
-                print("Doubles!")
-                self.doubles += 1
-            else:
-                self.doubles = 0
+            self.doubles_count(roll_one, roll_two)
         
         input()
         self.advance(roll_one + roll_two)
         current_square = squares[self.location]
         print(f"New square:\n{self.location} - "
               f"{current_square['name']}")
-    
+        
+        self.landing_square(current_square)
+
+    def landing_square(self, current_square):
+        square_type = current_square["type"]
+        if square_type == "street":
+            pass
+        elif square_type == "railroad":
+            pass
+        elif square_type == "utility":
+            pass
+        elif square_type == "comChest":
+            self.com_chest_card()
+        elif square_type == "chance":
+            self.chance_card()
+        elif square_type == "tax":
+            pass
+
+    def com_chest_card(self):
+        input("Pick Card >")
+        card = com_chest[randint(0, 14)]
+        print(card["name"])
+        if card["type"] == "balance":
+            self.balance += card["value"]
+        elif card["type"] == "GOOJF":
+            self.jail_out_free = True
+        elif card["type"] == "jail":
+            self.go_to_jail()
+        elif card["type"] == "go":
+            self.location = 0
+            self.balance += 200
+
+    def chance_card(self):
+        input("Pick Card >")
+        card = chance[randint(0, 14)]
+        card = com_chest[randint(0, 14)]
+        print(card["name"])
+        if card["type"] == "set_loc_property":
+            self.location = card["value"]
+            if self.location > card["value"]:
+                print("You passed Go")
+                self.balance += 200
+        elif card["type"] == "balance":
+            self.balance += card["value"]
+        elif card["type"] == "move":
+            self.location -= card["value"]
+        elif card["type"] == "GOOJF":
+            self.jail_out_free = True
+        elif card["type"] == "jail":
+            self.go_to_jail()
+        elif card["type"] == "go":
+            self.location = 0
+            self.balance += 200
+        
 
     def go_to_jail(self):
         self.jail = True
@@ -51,7 +100,7 @@ class Player:
             print("\nYou rolled 3 consecutive doubles!")
             self.go_to_jail()
 
-    def in_jail(self, squares):
+    def in_jail(self):
         print("You're in Jail\n")
         if self.in_jail_turns <= 3:
             print("(r) _R_oll doubles")
@@ -60,9 +109,9 @@ class Player:
         print("([b]) Pay $50 _b_ail")
         option = input("Enter choice:")
 
-        self.jail_options(option, squares)
+        self.jail_options(option)
     
-    def jail_options(self, option, squares):
+    def jail_options(self, option):
         if option == "r" and self.in_jail_turns <= 3:
             roll_one, roll_two = dice_roll()
             print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
@@ -86,10 +135,10 @@ class Player:
         self.get_out_of_jail(squares, False)
         return
 
-    def get_out_of_jail(self, squares, double_roll=(False, 0, 0)):
+    def get_out_of_jail(self, double_roll=(False, 0, 0)):
         jail_doubles, roll_one, roll_two = double_roll
         self.jail = False
-        self.normal_turn(squares, jail_doubles, roll_one, roll_two)
+        self.normal_turn(jail_doubles, roll_one, roll_two)
 
 
     def print_stats(self, player_num, current_square):
@@ -105,11 +154,12 @@ class Player:
             return
         self.location += moves
 
-    def add_balance(self, amount):
-        self.balance += amount
-
-    def remove_balance(self, amount):
-        self.balance -= amount
+    def doubles_count(self, roll_one, roll_two):
+        if roll_one == roll_two:
+                print("Doubles!")
+                self.doubles += 1
+        else:
+            self.doubles = 0
 
 
 def player_setup():
@@ -131,19 +181,25 @@ def player_setup():
     
     return player_list, [i for i in range(1, player_count+1)]
 
-
 def file_setup():
-    file_list = ["data/squares.py",]
+    file_list = ["data/squares.py", "data/com_chest.py", "data/chance.py",
+                 "TextopolyAgain.py"]
 
     for file in file_list:
         if not path.isfile(file):
             print(f'File "{file}" is missing'
                   '\nPlease download all files')
 
-    with open("data/squares.py", "r+") as squares_file:
-        squares = eval(squares_file.read())
+    global squares, com_chest, chance
 
-    return squares
+    with open("data/squares.py", "r+") as squares_file, \
+         open("data/com_chest", "r+") as com_chest_file, \
+         open("data/chance.py", "r+") as chance_file:
+        
+        squares = eval(squares_file.read())
+        com_chest_list, com_chest = eval(com_chest_file.read())
+        chance_list, chance = eval(chance_file.read())
+    
 
 def turnAdvance(player_num, remaining_players):
     if player_num == max(remaining_players):

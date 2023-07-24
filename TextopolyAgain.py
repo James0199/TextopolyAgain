@@ -1,5 +1,4 @@
-from random import randint
-from textopoly import *
+from data.textopoly import *
 
 input("\nWelcome to Textopoly!\n"
       "\nNotes:"
@@ -7,7 +6,7 @@ input("\nWelcome to Textopoly!\n"
       "\nIf you don't choose a valid option while in jail,"
       "\nYou'll automatically pay $50 bail.")
 
-squares = file_setup()
+squares, com_chest, chance = file_setup()
 players, remaining_players = player_setup()
 
 player_num = 1
@@ -19,9 +18,9 @@ while True:
     current_player.print_stats(player_num, current_square)
 
     if current_player.jail == True:
-        current_player.in_jail(squares, False)
+        current_player.in_jail(False)
     else:
-        current_player.normal_turn(squares)
+        current_player.normal_turn()
 
     current_player.jail_conditions()
 

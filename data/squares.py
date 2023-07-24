@@ -5,12 +5,12 @@
     },
     1: {
         'name': 'Mediterranean Avenue',
-        'price': 60,
-        'type': 'property',
+        'cost': 60,
+        'type': 'street',
         'color': 'brown',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 50,
+        'improvementCost': 50,
         'mortgaged': False,
         'rentLevels': {
             0: 2,
@@ -27,12 +27,12 @@
     },
     3: {
         'name': 'Baltic Avenue',
-        'price': 60,
+        'cost': 60,
         'type': 'street',
         'color': 'brown',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 50,
+        'improvementCost': 50,
         'mortgaged': False,
         'rentLevels': {
             0: 4,
@@ -46,11 +46,11 @@
     4: {
         'name': 'Income Tax',
         'type': 'tax',
-        'price': 200
+        'cost': 200
     },
     5: {
         'name': 'Reading Railroad',
-        'price': 200,
+        'cost': 200,
         'type': 'railroad',
         'owner': 'none',
         'mortgaged': False,
@@ -64,12 +64,12 @@
     },
     6: {
         'name': 'Oriental Avenue',
-        'price': 100,
+        'cost': 100,
         'type': 'street',
         'color': 'lightBlue',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 50,
+        'improvementCost': 50,
         'mortgaged': False,
         'rentLevels': {
             0: 6,
@@ -86,12 +86,12 @@
     },
     8: {
         'name': 'Vermont Avenue',
-        'price': 100,
+        'cost': 100,
         'type': 'street',
         'color': 'lightBlue',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 50,
+        'improvementCost': 50,
         'mortgaged': False,
         'rentLevels': {
             0: 6,
@@ -104,12 +104,12 @@
     },
     9: {
         'name': 'Connecticut Avenue',
-        'price': 120,
+        'cost': 120,
         'type': 'street',
         'color': 'lightBlue',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 50,
+        'improvementCost': 50,
         'mortgaged': False,
         'rentLevels': {
             0: 8,
@@ -126,12 +126,12 @@
     },
     11: {
         'name': 'St. Charles Place',
-        'price': 140,
+        'cost': 140,
         'type': 'street',
         'color': 'pink',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 10,
@@ -144,7 +144,7 @@
     },
     12: {
         'name': 'Electric Company',
-        'price': 150,
+        'cost': 150,
         'type': 'utility',
         'owner': 'none',
         'improvementLevel': 0,
@@ -152,12 +152,12 @@
     },
     13: {
         'name': 'States Avenue',
-        'price': 140,
+        'cost': 140,
         'type': 'street',
         'color': 'pink',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 10,
@@ -170,12 +170,12 @@
     },
     14: {
         'name': 'Virginia Avenue',
-        'price': 160,
+        'cost': 160,
         'type': 'street',
         'color': 'pink',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 12,
@@ -188,7 +188,7 @@
     },
     15: {
         'name': 'Pennsylvania Railroad',
-        'price': 200,
+        'cost': 200,
         'type': 'railroad',
         'owner': 'none',
         'improvementLevel': 0,
@@ -202,12 +202,12 @@
     },
     16: {
         'name': 'St. James Place',
-        'price': 180,
+        'cost': 180,
         'type': 'street',
         'color': 'orange',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 14,
@@ -224,12 +224,12 @@
     },
     18: {
         'name': 'Tennessee Avenue',
-        'price': 180,
+        'cost': 180,
         'type': 'street',
         'color': 'orange',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 14,
@@ -242,12 +242,12 @@
     },
     19: {
         'name': 'New York Avenue',
-        'price': 200,
+        'cost': 200,
         'type': 'street',
         'color': 'orange',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 100,
+        'improvementCost': 100,
         'mortgaged': False,
         'rentLevels': {
             0: 16,
@@ -264,12 +264,12 @@
     },
     21: {
         'name': 'Kentucky Avenue',
-        'price': 220,
+        'cost': 220,
         'type': 'street',
         'color': 'red',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 18,
@@ -286,12 +286,12 @@
     },
     23: {
         'name': 'Indiana Avenue',
-        'price': 220,
+        'cost': 220,
         'type': 'street',
         'color': 'red',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 18,
@@ -304,12 +304,12 @@
     },
     24: {
         'name': 'Illinois Avenue',
-        'price': 240,
+        'cost': 240,
         'type': 'street',
         'color': 'red',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 20,
@@ -322,7 +322,7 @@
     },
     25: {
         'name': 'B. & O. Railroad',
-        'price': 200,
+        'cost': 200,
         'type': 'railroad',
         'owner': 'none',
         'improvementLevel': 0,
@@ -336,12 +336,12 @@
     },
     26: {
         'name': 'Atlantic Avenue',
-        'price': 260,
+        'cost': 260,
         'type': 'street',
         'color': 'yellow',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 22,
@@ -354,12 +354,12 @@
     },
     27: {
         'name': 'Ventnor Avenue',
-        'price': 260,
+        'cost': 260,
         'type': 'street',
         'color': 'yellow',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 22,
@@ -372,7 +372,7 @@
     },
     28: {
         'name': 'Water Works',
-        'price': 150,
+        'cost': 150,
         'type': 'utility',
         'owner': 'none',
         'improvementLevel': 0,
@@ -380,12 +380,12 @@
     },
     29: {
         'name': 'Marvin Gardens',
-        'price': 280,
+        'cost': 280,
         'type': 'street',
         'color': 'yellow',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 150,
+        'improvementCost': 150,
         'mortgaged': False,
         'rentLevels': {
             0: 24,
@@ -402,12 +402,12 @@
     },
     31: {
         'name': 'Pacific Avenue',
-        'price': 300,
+        'cost': 300,
         'type': 'street',
         'color': 'green',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 200,
+        'improvementCost': 200,
         'mortgaged': False,
         'rentLevels': {
             0: 26,
@@ -420,12 +420,12 @@
     },
     32: {
         'name': 'North Carolina Avenue',
-        'price': 300,
+        'cost': 300,
         'type': 'street',
         'color': 'green',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 200,
+        'improvementCost': 200,
         'mortgaged': False,
         'rentLevels': {
             0: 26,
@@ -442,12 +442,12 @@
     },
     34: {
         'name': 'Pennsylvania Avenue',
-        'price': 320,
+        'cost': 320,
         'type': 'street',
         'color': 'green',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 200,
+        'improvementCost': 200,
         'mortgaged': False,
         'rentLevels': {
             0: 28,
@@ -460,7 +460,7 @@
     },
     35: {
         'name': 'Short Line',
-        'price': 200,
+        'cost': 200,
         'type': 'railroad',
         'owner': 'none',
         'improvementLevel': 0,
@@ -478,12 +478,12 @@
     },
     37: {
         'name': 'Park Place',
-        'price': 350,
+        'cost': 350,
         'type': 'street',
         'color': 'darkBlue',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 200,
+        'improvementCost': 200,
         'mortgaged': False,
         'rentLevels': {
             0: 35,
@@ -496,17 +496,17 @@
     },
     38: {
         'name': 'Luxury tax',
-        'price': 100,
+        'cost': 100,
         'type': 'tax',
     },
     39: {
         'name': 'Boardwalk',
-        'price': 400,
+        'cost': 400,
         'type': 'street',
         'color': 'darkBlue',
         'owner': 'none',
         'improvementLevel': 0,
-        'improvementPrice': 200,
+        'improvementCost': 200,
         'mortgaged': False,
         'rentLevels': {
             0: 50,
