@@ -129,7 +129,7 @@ class Player:
 
         print("You've paid $50 bail to get out of jail")
         self.balance -= 50
-        self.get_out_of_jail(False,)
+        self.get_out_of_jail((False))
         return
 
     def get_out_of_jail(self, double_roll=(False, 0, 0)):
@@ -174,10 +174,10 @@ def player_setup():
 
     player_list = {}
     for count in range(1, player_count + 1):
-        # Player(location, balance, properties, jail, jail_out_free, in_jail_turns, doubles)
         player_list.update({count: Player(0, 1500, [], False, False, 0, 0)})
 
-    return player_list, [i for i in range(1, player_count + 1)]
+    # Player_num, players, remaining_players
+    return 1, player_list, [i for i in range(1, player_count + 1)]
 
 
 def file_setup():
@@ -216,9 +216,12 @@ def dice_roll():
 
     return roll_one, roll_two
 
+
 def welcome():
-    input("\nWelcome to Textopoly!\n"
-          "\nNotes:"
-          "\nPress enter to advance prompts."
-          "\nIf you don't choose a valid option while in jail,"
-          "\nYou'll automatically pay $50 bail.")
+    input(
+        "\nWelcome to Textopoly!\n"
+        "\nNotes:"
+        "\nPress enter to advance prompts."
+        "\nIf you don't choose a valid option while in jail,"
+        "\nYou'll automatically pay $50 bail."
+    )

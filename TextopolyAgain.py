@@ -3,9 +3,7 @@ from data.textopoly import *
 welcome()
 
 squares, com_chest, chance = file_setup()
-players, remaining_players = player_setup()
-
-player_num = 1
+player_num, players, remaining_players = player_setup()
 
 while True:
     current_player = players[player_num]
