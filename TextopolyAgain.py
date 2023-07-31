@@ -11,7 +11,7 @@ while True:
 
     current_player.print_stats(player_num, current_square)
 
-    if current_player.jail == True:
+    if current_player.jail:
         current_player.in_jail(False)
     else:
         current_player.normal_turn()
@@ -20,4 +20,4 @@ while True:
 
     input("\nEnter to Continue...")
 
-    player_num = turnAdvance(player_num, remaining_players)
+    player_num = turn_advance(player_num, remaining_players)

@@ -23,7 +23,8 @@ class Player:
 
     def normal_turn(self, jail_doubles, roll_one=0, roll_two=0):
         if not jail_doubles:
-            roll_one, roll_two = dice_roll()
+            input("\nRoll dice >")
+            roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st: {roll_one}, 2nd: {roll_two} = " f"{roll_one + roll_two}")
 
             self.doubles_count(roll_one, roll_two)
@@ -52,7 +53,7 @@ class Player:
 
     def com_chest_card(self):
         input("Pick Card >")
-        card = com_chest[randint(0, 14)]
+        card = com_chest[randint(0, 13)]
         print(card["name"])
         if card["type"] == "balance":
             self.balance += card["value"]
@@ -66,8 +67,7 @@ class Player:
 
     def chance_card(self):
         input("Pick Card >")
-        card = chance[randint(0, 14)]
-        card = com_chest[randint(0, 14)]
+        card = chance[randint(0, 12)]
         print(card["name"])
         if card["type"] == "set_loc_property":
             self.location = card["value"]
@@ -112,7 +112,8 @@ class Player:
 
     def jail_options(self, option):
         if option == "r" and self.in_jail_turns <= 3:
-            roll_one, roll_two = dice_roll()
+            input("\nRoll dice >")
+            roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
 
             if roll_one == roll_two:
@@ -129,7 +130,9 @@ class Player:
 
         print("You've paid $50 bail to get out of jail")
         self.balance -= 50
-        self.get_out_of_jail((False))
+        self.get_out_of_jail(
+            False,
+        )
         return
 
     def get_out_of_jail(self, double_roll=(False, 0, 0)):
@@ -161,6 +164,11 @@ class Player:
 
 
 def player_setup():
+    """
+    Sets up player data such as
+    the current player's index, player list
+    and remaning players list
+    """
     while True:
         player_count = input("\nHow many players?(2-8):")
         if not player_count.isdigit():
@@ -191,30 +199,26 @@ def file_setup():
     for file in file_list:
         if not path.isfile(file):
             print(f'File "{file}" is missing' "\nPlease download all files")
+            return
 
     global squares, com_chest, chance
 
-    with open("data/squares.py", "r+") as squares_file, open(
-        "data/com_chest", "r+"
-    ) as com_chest_file, open("data/chance.py", "r+") as chance_file:
+    with (
+        open("data/squares.py", "r+") as squares_file,
+        open("data/com_chest", "r+") as com_chest_file,
+        open("data/chance.py", "r+") as chance_file,
+    ):
 
         squares = eval(squares_file.read())
         com_chest_list, com_chest = eval(com_chest_file.read())
         chance_list, chance = eval(chance_file.read())
 
 
-def turnAdvance(player_num, remaining_players):
+def turn_advance(player_num, remaining_players):
     if player_num == max(remaining_players):
         return min(remaining_players)
 
     return remaining_players[remaining_players.index(player_num) + 1]
-
-
-def dice_roll():
-    input("\nRoll dice >")
-    roll_one, roll_two = (randint(1, 6), randint(1, 6))
-
-    return roll_one, roll_two
 
 
 def welcome():
