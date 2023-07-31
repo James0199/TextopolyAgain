@@ -1,10 +1,6 @@
 from data.textopoly import *
 
-input("\nWelcome to Textopoly!\n"
-      "\nNotes:"
-      "\nPress enter to advance prompts."
-      "\nIf you don't choose a valid option while in jail,"
-      "\nYou'll automatically pay $50 bail.")
+welcome()
 
 squares, com_chest, chance = file_setup()
 players, remaining_players = player_setup()

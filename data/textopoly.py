@@ -215,3 +215,10 @@ def dice_roll():
     roll_one, roll_two = (randint(1, 6), randint(1, 6))
 
     return roll_one, roll_two
+
+def welcome():
+    input("\nWelcome to Textopoly!\n"
+          "\nNotes:"
+          "\nPress enter to advance prompts."
+          "\nIf you don't choose a valid option while in jail,"
+          "\nYou'll automatically pay $50 bail.")
