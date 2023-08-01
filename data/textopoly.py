@@ -104,7 +104,7 @@ class Player:
             self.go_to_jail()
 
     def tax_square(self, current_square):
-        print(f"You paid {current_square['cost']}")
+        print(f"You paid {current_square['cost']} in {current_square['name']}")
         self.balance -= current_square["cost"]
 
     def go_to_jail(self):
