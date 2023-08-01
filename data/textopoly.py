@@ -39,17 +39,26 @@ class Player:
     def landing_square(self, current_square):
         square_type = current_square["type"]
         if square_type == "street":
-            pass
+            self.street_property(current_square)
         elif square_type == "railroad":
-            pass
+            self.railroad_property(current_square)
         elif square_type == "utility":
-            pass
+            self.utility_property(current_square)
         elif square_type == "comChest":
             self.com_chest_card()
         elif square_type == "chance":
             self.chance_card()
         elif square_type == "tax":
-            pass
+            self.tax_square(current_square)
+
+    def street_property(self, current_square):
+        pass
+
+    def railroad_property(self, current_square):
+        pass
+
+    def utility_property(self, current_square):
+        pass
 
     def com_chest_card(self):
         input("Pick Card >")
@@ -86,18 +95,22 @@ class Player:
             self.location = 0
             self.balance += 200
 
+    def corner_square(self):
+        if self.location == 0:
+            print("You landed on Go, recieve $200")
+            self.balance += 200
+        elif self.location == 30:
+            print("You landed on Go To Jail!")
+            self.go_to_jail()
+
+    def tax_square(self, current_square):
+        print(f"You paid {current_square['cost']}")
+        self.balance -= current_square["cost"]
+
     def go_to_jail(self):
         self.jail = True
         self.location = 10
         print("You have been sent to Jail")
-
-    def jail_conditions(self):
-        if self.location == 30:
-            print("\nYou landed on Go to Jail!")
-            self.go_to_jail()
-        elif self.doubles >= 3:
-            print("\nYou rolled 3 consecutive doubles!")
-            self.go_to_jail()
 
     def in_jail(self):
         print("You're in Jail\n")
@@ -148,7 +161,8 @@ class Player:
         )
 
     def advance(self, moves):
-        if self.location + moves > 39:
+        if self.location + moves > 39 and (self.location + moves - 40) != 0:
+
             self.location = (self.location + moves) - 40
             print("You passed Go, recieve $200")
             self.balance += 200
@@ -161,14 +175,12 @@ class Player:
             self.doubles += 1
         else:
             self.doubles = 0
+        if self.doubles >= 3:
+            print("You rolled 3 consecutive doubles!")
+            self.go_to_jail()
 
 
 def player_setup():
-    """
-    Sets up player data such as
-    the current player's index, player list
-    and remaning players list
-    """
     while True:
         player_count = input("\nHow many players?(2-8):")
         if not player_count.isdigit():
