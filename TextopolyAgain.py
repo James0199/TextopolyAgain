@@ -16,8 +16,6 @@ while True:
     else:
         current_player.normal_turn()
 
-    current_player.jail_conditions()
-
     input("\nEnter to Continue...")
 
     player_num = turn_advance(player_num, remaining_players)
