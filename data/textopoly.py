@@ -121,7 +121,7 @@ class Player:
         print("([b]) Pay $50 _b_ail")
         option = input("Enter choice:")
 
-        self.jail_options(option)
+        print(self.jail_options(option))
 
     def jail_options(self, option):
         if option == "r" and self.in_jail_turns <= 3:
@@ -130,23 +130,18 @@ class Player:
             print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
 
             if roll_one == roll_two:
-                print("You rolled a double!" "\nYou've been released")
-                self.get_out_of_jail((False, roll_one, roll_two))
-                return
-            print("You didn't roll a double" "\nYou'll remain in Jail")
-            return
+                self.get_out_of_jail((True, roll_one, roll_two))
+                return "You rolled a double!" "\nYou've been released"
+
+            return "You didn't roll a double" "\nYou'll remain in Jail"
 
         elif option == "f" and self.jail_out_free:
-            print("You have used your Get Out Of Jail Free Card")
-            self.get_out_of_jail(False)
-            return
+            self.get_out_of_jail()
+            return "You have used your Get Out Of Jail Free Card"
 
-        print("You've paid $50 bail to get out of jail")
         self.balance -= 50
-        self.get_out_of_jail(
-            False,
-        )
-        return
+        self.get_out_of_jail()
+        return "You've paid $50 bail to get out of jail"
 
     def get_out_of_jail(self, double_roll=(False, 0, 0)):
         jail_doubles, roll_one, roll_two = double_roll
