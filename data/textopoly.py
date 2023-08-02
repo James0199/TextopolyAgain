@@ -5,6 +5,7 @@ from random import randint
 class Player:
     def __init__(
         self,
+        index: int,
         location: int,
         balance: int,
         properties: list,
@@ -13,6 +14,7 @@ class Player:
         in_jail_turns: int,
         doubles: int,
     ):
+        self.index = index
         self.location = location
         self.balance = balance
         self.properties = properties
@@ -21,7 +23,7 @@ class Player:
         self.in_jail_turns = in_jail_turns
         self.doubles = doubles
 
-    def normal_turn(self, jail_doubles, roll_one=0, roll_two=0):
+    def normal_turn(self, jail_doubles=False, roll_one=0, roll_two=0):
         if not jail_doubles:
             input("\nRoll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
@@ -34,16 +36,16 @@ class Player:
         current_square = squares[self.location]
         print(f"New square:\n{self.location} - " f"{current_square['name']}")
 
-        self.landing_square(current_square)
+        self.landing_square(current_square, (roll_one, roll_two))
 
-    def landing_square(self, current_square):
+    def landing_square(self, current_square, dice_rolls):
         square_type = current_square["type"]
         if square_type == "street":
             self.street_property(current_square)
         elif square_type == "railroad":
             self.railroad_property(current_square)
         elif square_type == "utility":
-            self.utility_property(current_square)
+            self.utility_property(current_square, dice_rolls)
         elif square_type == "comChest":
             self.com_chest_card()
         elif square_type == "chance":
@@ -57,8 +59,10 @@ class Player:
     def railroad_property(self, current_square):
         pass
 
-    def utility_property(self, current_square):
-        pass
+    def utility_property(self, current_square, dice_rolls):
+        roll_one, roll_two = dice_rolls
+        if current_square["owner"] == "none":
+            self.purchase(current_square)
 
     def com_chest_card(self):
         input("Pick Card >")
@@ -107,6 +111,17 @@ class Player:
         print(f"You paid {current_square['cost']} in {current_square['name']}")
         self.balance -= current_square["cost"]
 
+    def purchase(self, current_square: dict):
+        option = input(
+            f"Would you like to purchase {current_square['name']}"
+            f"\nfor ${current_square['cost']}? (y/[n]):"
+        )
+        if option == "y" and self.balance - current_square["cost"] >= 0:
+            self.balance -= current_square["cost"]
+            self.properties.append(self.location)
+            current_square.update({"owner": self.index})
+            squares.update({current_square["index"]: current_square})
+
     def go_to_jail(self):
         self.jail = True
         self.location = 10
@@ -148,9 +163,9 @@ class Player:
         self.jail = False
         self.normal_turn(jail_doubles, roll_one, roll_two)
 
-    def print_stats(self, player_num, current_square):
+    def print_stats(self, current_square):
         print(
-            f"\nPlayer {player_num}'s turn"
+            f"\nPlayer {self.index + 1}'s turn"
             f"\nCurrent balance: {self.balance}"
             f"\nCurrent square:\n{self.location} - {current_square['name']}"
         )
@@ -187,12 +202,12 @@ def player_setup():
         player_count = int(player_count)
         break
 
-    player_list = {}
-    for count in range(1, player_count + 1):
-        player_list.update({count: Player(0, 1500, [], False, False, 0, 0)})
+    player_list = []
+    for count in range(0, player_count):
+        player_list.append(Player(count, 0, 1500, [], False, False, 0, 0))
 
-    # Player_num, players, remaining_players
-    return 1, player_list, [i for i in range(1, player_count + 1)]
+    # Player_num, players, lost_players
+    return 0, player_list, []
 
 
 def file_setup():
@@ -205,27 +220,28 @@ def file_setup():
 
     for file in file_list:
         if not path.isfile(file):
-            print(f'File "{file}" is missing' "\nPlease download all files")
+            print(f'File "{file}" is missing\nPlease download all files')
             return
 
     global squares, com_chest, chance
 
     with (
         open("data/squares.py", "r+") as squares_file,
-        open("data/com_chest", "r+") as com_chest_file,
+        open("data/com_chest.py", "r+") as com_chest_file,
         open("data/chance.py", "r+") as chance_file,
     ):
 
         squares = eval(squares_file.read())
-        com_chest_list, com_chest = eval(com_chest_file.read())
-        chance_list, chance = eval(chance_file.read())
+        com_chest = eval(com_chest_file.read())
+        chance = eval(chance_file.read())
+
+    return squares
 
 
-def turn_advance(player_num, remaining_players):
-    if player_num == max(remaining_players):
-        return min(remaining_players)
-
-    return remaining_players[remaining_players.index(player_num) + 1]
+def turn_advance(player_index, player_list):
+    if player_index + 1 >= len(player_list):
+        return 0
+    return player_index + 1
 
 
 def welcome():

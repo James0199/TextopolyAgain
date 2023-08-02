@@ -2,20 +2,20 @@ from data.textopoly import *
 
 welcome()
 
-squares, com_chest, chance = file_setup()
-player_num, players, remaining_players = player_setup()
+squares = file_setup()
+player_index, players, lost_players = player_setup()
 
 while True:
-    current_player = players[player_num]
+    current_player = players[player_index]
     current_square = squares[current_player.location]
 
-    current_player.print_stats(player_num, current_square)
+    current_player.print_stats(current_square)
 
     if current_player.jail:
-        current_player.in_jail(False)
+        current_player.in_jail()
     else:
         current_player.normal_turn()
 
     input("\nEnter to Continue...")
 
-    player_num = turn_advance(player_num, remaining_players)
+    player_index = turn_advance(player_index, players)
