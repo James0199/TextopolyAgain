@@ -16,6 +16,4 @@ while True:
     else:
         current_player.normal_turn()
 
-    input("\nEnter to Continue...")
-
-    player_index = turn_advance(player_index, players)
+    player_index = turn_advance(player_index, players, current_player)

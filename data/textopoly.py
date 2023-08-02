@@ -38,6 +38,8 @@ class Player:
 
         self.landing_square(current_square, (roll_one, roll_two))
 
+        input("\nEnter to Continue...")
+
     def landing_square(self, current_square, dice_rolls):
         square_type = current_square["type"]
         if square_type == "street":
@@ -215,7 +217,7 @@ def file_setup():
         "data/squares.py",
         "data/com_chest.py",
         "data/chance.py",
-        "TextopolyAgain.py",
+        "data/textopoly.py" "TextopolyAgain.py",
     ]
 
     for file in file_list:
@@ -238,7 +240,9 @@ def file_setup():
     return squares
 
 
-def turn_advance(player_index, player_list):
+def turn_advance(player_index, player_list, current_player):
+    if 0 < current_player.doubles < 3 and not current_player.jail:
+        return player_index
     if player_index + 1 >= len(player_list):
         return 0
     return player_index + 1
