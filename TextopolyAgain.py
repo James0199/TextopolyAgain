@@ -1,9 +1,8 @@
 from data.textopoly import *
 
-welcome()
-
 squares = file_setup()
-player_index, players, lost_players = player_setup()
+welcome()
+player_index, players, remaining_players = player_setup()
 
 while True:
     current_player = players[player_index]

@@ -65,6 +65,18 @@ class Player:
         roll_one, roll_two = dice_rolls
         if current_square["owner"] == "none":
             self.purchase(current_square)
+            # This one looks real crappy
+            if squares[28]["owner"] == self.index and squares[12] == self.index:
+                electric, water = squares[12], squares[28]
+                electric.update({"improvementLevel": 2})
+                electric.update({"owner": self.index})
+                water.update({"improvementLevel": 2})
+                water.update({"owner": self.index})
+                squares.update({12: electric})
+                squares.update({28: water})
+                return
+            current_square.update({"improvementLevel": 1})
+            squares.update({current_square["index"]: current_square})
 
     def com_chest_card(self):
         input("Pick Card >")
@@ -110,7 +122,7 @@ class Player:
             self.go_to_jail()
 
     def tax_square(self, current_square):
-        print(f"You paid {current_square['cost']} in {current_square['name']}")
+        print(f"You paid ${current_square['cost']} in {current_square['name']}")
         self.balance -= current_square["cost"]
 
     def purchase(self, current_square: dict):
@@ -123,6 +135,9 @@ class Player:
             self.properties.append(self.location)
             current_square.update({"owner": self.index})
             squares.update({current_square["index"]: current_square})
+            print(
+                f"You have bought {current_square['name']} for ${current_square['cost']}"
+            )
 
     def go_to_jail(self):
         self.jail = True
@@ -173,8 +188,10 @@ class Player:
         )
 
     def advance(self, moves):
-        if self.location + moves > 39 and (self.location + moves - 40) != 0:
-
+        if self.location + moves == 40:
+            self.location = 0
+            return
+        if self.location + moves > 39:
             self.location = (self.location + moves) - 40
             print("You passed Go, recieve $200")
             self.balance += 200
@@ -204,20 +221,22 @@ def player_setup():
         player_count = int(player_count)
         break
 
-    player_list = []
+    player_list = {}
     for count in range(0, player_count):
-        player_list.append(Player(count, 0, 1500, [], False, False, 0, 0))
+        player_list.update({count: Player(count, 0, 1500, [], False, False, 0, 0)})
 
-    # Player_num, players, lost_players
-    return 0, player_list, []
+    # Player_num, players, remaining_players
+    return 0, player_list, [i for i in range(0, player_count)]
 
 
 def file_setup():
+    print("\nLoading files...")
     file_list = [
         "data/squares.py",
         "data/com_chest.py",
         "data/chance.py",
-        "data/textopoly.py" "TextopolyAgain.py",
+        "data/textopoly.py",
+        "TextopolyAgain.py",
     ]
 
     for file in file_list:
@@ -237,14 +256,15 @@ def file_setup():
         com_chest = eval(com_chest_file.read())
         chance = eval(chance_file.read())
 
+    print("Loaded successfully!")
     return squares
 
 
 def turn_advance(player_index, player_list, current_player):
     if 0 < current_player.doubles < 3 and not current_player.jail:
         return player_index
-    if player_index + 1 >= len(player_list):
-        return 0
+    if max(list(player_list.keys())) == player_index:
+        return min(list(player_list.keys()))
     return player_index + 1
 
 
