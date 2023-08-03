@@ -14,4 +14,6 @@ while True:
     else:
         current_player.normal_turn()
 
+    players = bankruptcy(current_player, players)
+
     player_index = turn_advance(player_index, players, current_player)

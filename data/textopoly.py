@@ -103,7 +103,7 @@ class Player:
         roll_one, roll_two = dice_rolls
         if current_square["owner"] == "none":
             self.purchase(current_square)
-            # This one looks real crappy
+            # Will fix this
             if (
                 files.squares[28]["owner"] == self.index
                 and files.squares[12] == self.index
@@ -282,6 +282,18 @@ def update_squares_info(index, key, value):
     updated_square: dict = files.squares[index]
     updated_square.update({key: value})
     files.squares.update(updated_square)
+
+
+def bankruptcy(current_player: Player, player_list: dict):
+    if current_player.balance < 0:
+        player_list.pop(current_player.index)
+        return player_list
+    if len(player_list) == 1:
+        winning_player: Player = list(player_list.values())[0]
+        print(f"Congrats! Player {winning_player.index} won the game!")
+        exit()
+    print("Whoops! No one won the game!")
+    exit()
 
 
 def welcome():
