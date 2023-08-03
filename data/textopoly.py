@@ -2,6 +2,44 @@ from os import path
 from random import randint
 
 
+class Files:
+    def __init__(self):
+        self.squares = {}
+        self.com_chest = {}
+        self.chance = {}
+        self.file_setup()
+
+    def file_setup(self):
+        print("\nLoading files...")
+        file_list = [
+            "data/squares.py",
+            "data/com_chest.py",
+            "data/chance.py",
+            "data/textopoly.py",
+            "TextopolyAgain.py",
+        ]
+
+        for file in file_list:
+            if not path.isfile(file):
+                print(f'File "{file}" is missing\nPlease download all files')
+                return
+
+        with (
+            open("data/squares.py", "r+") as squares_file,
+            open("data/com_chest.py", "r+") as com_chest_file,
+            open("data/chance.py", "r+") as chance_file,
+        ):
+
+            self.squares = eval(squares_file.read())
+            self.com_chest = eval(com_chest_file.read())
+            self.chance = eval(chance_file.read())
+
+        print("Loaded successfully!")
+
+
+files = Files()
+
+
 class Player:
     def __init__(
         self,
@@ -33,7 +71,7 @@ class Player:
 
         input()
         self.advance(roll_one + roll_two)
-        current_square = squares[self.location]
+        current_square = files.squares[self.location]
         print(f"New square:\n{self.location} - " f"{current_square['name']}")
 
         self.landing_square(current_square, (roll_one, roll_two))
@@ -66,21 +104,24 @@ class Player:
         if current_square["owner"] == "none":
             self.purchase(current_square)
             # This one looks real crappy
-            if squares[28]["owner"] == self.index and squares[12] == self.index:
-                electric, water = squares[12], squares[28]
+            if (
+                files.squares[28]["owner"] == self.index
+                and files.squares[12] == self.index
+            ):
+                electric, water = files.squares[12], files.squares[28]
                 electric.update({"improvementLevel": 2})
                 electric.update({"owner": self.index})
                 water.update({"improvementLevel": 2})
                 water.update({"owner": self.index})
-                squares.update({12: electric})
-                squares.update({28: water})
+                files.squares.update({12: electric})
+                files.squares.update({28: water})
                 return
             current_square.update({"improvementLevel": 1})
-            squares.update({current_square["index"]: current_square})
+            files.squares.update({current_square["index"]: current_square})
 
     def com_chest_card(self):
         input("Pick Card >")
-        card = com_chest[randint(0, 13)]
+        card = files.com_chest[randint(0, 13)]
         print(card["name"])
         if card["type"] == "balance":
             self.balance += card["value"]
@@ -94,7 +135,7 @@ class Player:
 
     def chance_card(self):
         input("Pick Card >")
-        card = chance[randint(0, 12)]
+        card = files.chance[randint(0, 12)]
         print(card["name"])
         if card["type"] == "set_loc_property":
             self.location = card["value"]
@@ -134,7 +175,7 @@ class Player:
             self.balance -= current_square["cost"]
             self.properties.append(self.location)
             current_square.update({"owner": self.index})
-            squares.update({current_square["index"]: current_square})
+            files.squares.update({current_square["index"]: current_square})
             print(
                 f"You have bought {current_square['name']} for ${current_square['cost']}"
             )
@@ -229,43 +270,18 @@ def player_setup():
     return 0, player_list, [i for i in range(0, player_count)]
 
 
-def file_setup():
-    print("\nLoading files...")
-    file_list = [
-        "data/squares.py",
-        "data/com_chest.py",
-        "data/chance.py",
-        "data/textopoly.py",
-        "TextopolyAgain.py",
-    ]
-
-    for file in file_list:
-        if not path.isfile(file):
-            print(f'File "{file}" is missing\nPlease download all files')
-            return
-
-    global squares, com_chest, chance
-
-    with (
-        open("data/squares.py", "r+") as squares_file,
-        open("data/com_chest.py", "r+") as com_chest_file,
-        open("data/chance.py", "r+") as chance_file,
-    ):
-
-        squares = eval(squares_file.read())
-        com_chest = eval(com_chest_file.read())
-        chance = eval(chance_file.read())
-
-    print("Loaded successfully!")
-    return squares
-
-
 def turn_advance(player_index, player_list, current_player):
     if 0 < current_player.doubles < 3 and not current_player.jail:
         return player_index
     if max(list(player_list.keys())) == player_index:
         return min(list(player_list.keys()))
     return player_index + 1
+
+
+def update_squares_info(index, key, value):
+    updated_square: dict = files.squares[index]
+    updated_square.update({key: value})
+    files.squares.update(updated_square)
 
 
 def welcome():
