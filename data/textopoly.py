@@ -36,6 +36,11 @@ class Files:
 
         print("Loaded successfully!")
 
+    def update_squares(self, index, key, value):
+        updated_square: dict = files.squares[index]
+        updated_square.update({key: value})
+        self.squares.update(updated_square)
+
 
 files = Files()
 
@@ -159,7 +164,7 @@ class Player:
         if option == "y" and self.balance - current_square["cost"] >= 0:
             self.balance -= current_square["cost"]
             self.properties.append(self.location)
-            update_squares_info(current_square["index"], "owner", self.index)
+            files.update_squares(current_square["index"], "owner", self.index)
             print(
                 f"You have bought {current_square['name']} for ${current_square['cost']}"
             )
@@ -234,50 +239,49 @@ class Player:
             self.go_to_jail()
 
 
-def player_setup():
-    while True:
-        player_count = input("\nHow many players?(2-8):")
-        if not player_count.isdigit():
-            print("Try again")
-            continue
-        if not int(player_count) in range(2, 8 + 1):
-            print("Try again")
-            continue
-        player_count = int(player_count)
-        break
+class PlayerData:
+    def __init__(self):
+        self.player_index = 0
+        self.player_list = {}
+        self.remaining_players = []
 
-    player_list = {}
-    for count in range(0, player_count):
-        player_list.update({count: Player(count, 0, 1500, [], False, False, 0, 0)})
+        self.player_setup()
 
-    # Player_num, players, remaining_players
-    return 0, player_list, [i for i in range(0, player_count)]
+    def player_setup(self):
+        while True:
+            player_count = input("\nHow many players?(2-8):")
+            if not player_count.isdigit():
+                print("Try again")
+                continue
+            if not int(player_count) in range(2, 8 + 1):
+                print("Try again")
+                continue
+            player_count = int(player_count)
+            break
 
+        for count in range(0, player_count):
+            self.player_list.update(
+                {count: Player(count, 0, 1500, [], False, False, 0, 0)}
+            )
 
-def turn_advance(player_index, player_list, current_player):
-    if 0 < current_player.doubles < 3 and not current_player.jail:
-        return player_index
-    if max(list(player_list.keys())) == player_index:
-        return min(list(player_list.keys()))
-    return player_index + 1
+        self.remaining_players = [i for i in range(0, player_count)]
 
+    def bankruptcy(self, current_player: Player):
+        if current_player.balance < 0:
+            self.player_list.pop(current_player.index)
+            return
+        if len(self.player_list) == 1:
+            winning_player: Player = list(self.player_list.values())[0]
+            print(f"Congrats! Player {winning_player.index} won the game!")
+            exit()
 
-def update_squares_info(index, key, value):
-    updated_square: dict = files.squares[index]
-    updated_square.update({key: value})
-    files.squares.update(updated_square)
-
-
-def bankruptcy(current_player: Player, player_list: dict):
-    if current_player.balance < 0:
-        player_list.pop(current_player.index)
-        return player_list
-    if len(player_list) == 1:
-        winning_player: Player = list(player_list.values())[0]
-        print(f"Congrats! Player {winning_player.index} won the game!")
-        exit()
-    print("Whoops! No one won the game!")
-    exit()
+    def turn_advance(self, current_player: Player):
+        if current_player.doubles in range(1, 3 + 1) and not current_player.jail:
+            return
+        if max(list(self.player_list.keys())) == self.player_index:
+            self.player_index = min(list(self.player_list.keys()))
+            return
+        self.player_index += 1
 
 
 def welcome():

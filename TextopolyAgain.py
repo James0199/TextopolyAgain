@@ -1,10 +1,10 @@
 from data.textopoly import *
 
 welcome()
-player_index, players, remaining_players = player_setup()
+players = PlayerData()
 
 while True:
-    current_player = players[player_index]
+    current_player = players.player_list[players.player_index]
     current_square = files.squares[current_player.location]
 
     current_player.print_stats(current_square)
@@ -14,6 +14,6 @@ while True:
     else:
         current_player.normal_turn()
 
-    players = bankruptcy(current_player, players)
+    players.bankruptcy(current_player)
 
-    player_index = turn_advance(player_index, players, current_player)
+    players.turn_advance(current_player)
