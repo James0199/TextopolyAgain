@@ -103,21 +103,6 @@ class Player:
         roll_one, roll_two = dice_rolls
         if current_square["owner"] == "none":
             self.purchase(current_square)
-            # Will fix this
-            if (
-                files.squares[28]["owner"] == self.index
-                and files.squares[12] == self.index
-            ):
-                electric, water = files.squares[12], files.squares[28]
-                electric.update({"improvementLevel": 2})
-                electric.update({"owner": self.index})
-                water.update({"improvementLevel": 2})
-                water.update({"owner": self.index})
-                files.squares.update({12: electric})
-                files.squares.update({28: water})
-                return
-            current_square.update({"improvementLevel": 1})
-            files.squares.update({current_square["index"]: current_square})
 
     def com_chest_card(self):
         input("Pick Card >")
@@ -174,8 +159,7 @@ class Player:
         if option == "y" and self.balance - current_square["cost"] >= 0:
             self.balance -= current_square["cost"]
             self.properties.append(self.location)
-            current_square.update({"owner": self.index})
-            files.squares.update({current_square["index"]: current_square})
+            update_squares_info(current_square["index"], "owner", self.index)
             print(
                 f"You have bought {current_square['name']} for ${current_square['cost']}"
             )

@@ -113,7 +113,6 @@
         "cost": 150,
         "type": "utility",
         "owner": "none",
-        "improvementLevel": 0,
         "mortgaged": False,
     },
     13: {
@@ -287,7 +286,6 @@
         "cost": 150,
         "type": "utility",
         "owner": "none",
-        "improvementLevel": 0,
         "mortgaged": False,
     },
     29: {
