@@ -37,7 +37,7 @@ class Files:
         print("Loaded successfully!")
 
     def update_squares(self, index, key, value):
-        updated_square: dict = files.squares[index]
+        updated_square: dict = self.squares[index]
         updated_square.update({key: value})
         self.squares.update(updated_square)
 
