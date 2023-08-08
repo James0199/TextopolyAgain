@@ -58,14 +58,14 @@ class Street(Ownable):
         color: str,
         improvement_level: int,
         improvement_cost: int,
-        rent_levels: dict
+        rent_levels: dict,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.cost = cost
         self.owner = owner
         self.mortgaged = mortgaged
         self.color = color
-        improvement_level = improvement_level
+        self.improvement_level = improvement_level
         self.IMPROVEMENT_COST = improvement_cost
         self.rent_levels = rent_levels
 
