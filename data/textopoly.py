@@ -2,6 +2,108 @@ from os import path
 from random import randint
 
 
+class Square:
+    def __init__(self, index: int, name: str, square_type: str):
+        self.index = index
+        self.name = name
+        self.square_type = square_type
+
+
+class ComChest(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+
+class Chance(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+
+class Tax(Square):
+    def __init__(self, index, name, square_type, cost):
+        super().__init__(index, name, square_type)
+        self.cost = cost
+
+
+class Corner(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+
+class Ownable(Square):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        square_type: str,
+        cost: int,
+        owner: int,
+        mortgaged: bool,
+    ):
+        super().__init__(index, name, square_type)
+        self.cost = cost
+        self.owner = owner
+        self.mortgaged = mortgaged
+
+
+class Street(Ownable):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        square_type: str,
+        cost: int,
+        owner: int,
+        mortgaged: bool,
+        color: str,
+        improvement_level: int,
+        improvement_cost: int,
+        rent_levels: dict
+    ):
+        super().__init__(index, name, square_type, cost, owner, mortgaged)
+        self.cost = cost
+        self.owner = owner
+        self.mortgaged = mortgaged
+        self.color = color
+        improvement_level = improvement_level
+        self.IMPROVEMENT_COST = improvement_cost
+        self.rent_levels = rent_levels
+
+
+class Railroad(Ownable):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        square_type: str,
+        cost: int,
+        owner: int,
+        mortgaged: bool,
+        rent_levels: dict,
+    ):
+        super().__init__(index, name, square_type, cost, owner, mortgaged)
+        self.cost = cost
+        self.owner = owner
+        self.mortgaged = mortgaged
+        self.rent_levels = rent_levels
+
+
+class Utility(Ownable):
+    def __init__(
+        self,
+        index: int,
+        name: str,
+        square_type: str,
+        cost: int,
+        owner: int,
+        mortgaged: bool,
+    ):
+        super().__init__(index, name, square_type, cost, owner, mortgaged)
+        self.cost = cost
+        self.owner = owner
+        self.mortgaged = mortgaged
+
+
 class Files:
     def __init__(self):
         self.squares = {}
