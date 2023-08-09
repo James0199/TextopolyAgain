@@ -110,6 +110,69 @@ def files_exist():
             exit()
 
 
+def square_types(square):
+    square_type = square["type"]
+    if square_type == "street":
+        square_obj = Street(
+            square["index"],
+            square["name"],
+            square_type,
+            square["cost"],
+            None,
+            False,
+            square["color"],
+            0,
+            square["IMPROVEMENT_COST"],
+            square["rent_levels"],
+        )
+        return square_obj
+    elif square_type == "railroad":
+        square_obj = Railroad(
+            square["index"],
+            square["name"],
+            square_type,
+            square["cost"],
+            None,
+            False,
+            square["rent_levels"],
+        )
+        return square_obj
+    elif square_type == "utility":
+        square_obj = Utility(
+            square["index"],
+            square["name"],
+            square_type,
+            square["cost"],
+            None,
+            False,
+        )
+        return square_obj
+    elif square_type == "comChest":
+        square_obj = ComChest(
+            square["index"],
+            square["name"],
+            square_type,
+        )
+        return square_obj
+    elif square_type == "chance":
+        square_obj = Chance(
+            square["index"],
+            square["name"],
+            square_type,
+        )
+        return square_obj
+    elif square_type == "tax":
+        square_obj = Tax(square["index"], square["name"], square_type, square["cost"])
+        return square_obj
+    elif square_type == "corner":
+        square_obj = Corner(
+            square["index"],
+            square["name"],
+            square_type,
+        )
+        return square_obj
+
+
 class Files:
     def __init__(self):
         self.squares = {}
@@ -137,69 +200,12 @@ class Files:
 
         print("Loaded successfully!")
 
-    def square_types(self, square):
-        square_type = square["type"]
-        if square_type == "street":
-            square_obj = Street(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-                square["color"],
-                0,
-                square["IMRPOVEMENT_COST"],
-                square["rent_levels"],
-            )
-        elif square_type == "railroad":
-            square_obj = Railroad(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-                square["rent_levels"],
-            )
-        elif square_type == "utility":
-            square_obj = Utility(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-            )
-        elif square_type == "comChest":
-            square_obj = ComChest(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-        elif square_type == "chance":
-            square_obj = Chance(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-        elif square_type == "tax":
-            square_obj = Tax(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"]
-            )
-        elif square_type == "corner":
-            square_obj = Corner(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-
     def dict_to_obj(self):
+        new_squares = {}
         for index, square in list(self.squares.items()):
-            self.square_types(square)
+            square_obj = square_types(square)
+            new_squares.update({index: square_obj})
+        self.squares = new_squares
 
     def update_squares(self, index, attr, value):
         updated_square = self.squares[index]
@@ -270,9 +276,7 @@ class Player:
         pass
 
     def utility_property(self, current_square, dice_rolls):
-        roll_one, roll_two = dice_rolls
-        if current_square["owner"] == "none":
-            self.purchase(current_square)
+        pass
 
     def com_chest_card(self):
         input("Pick Card >")
@@ -311,7 +315,7 @@ class Player:
 
     def corner_square(self):
         if self.location == 0:
-            print("You landed on Go, recieve $200")
+            print("You landed on Go, receive $200")
             self.balance += 200
         elif self.location == 30:
             print("You landed on Go To Jail!")
@@ -388,7 +392,7 @@ class Player:
             return
         if self.location + moves > 39:
             self.location = (self.location + moves) - 40
-            print("You passed Go, recieve $200")
+            print("You passed Go, receive $200")
             self.balance += 200
             return
         self.location += moves
