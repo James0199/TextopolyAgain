@@ -37,7 +37,7 @@ class Ownable(Square):
         name: str,
         square_type: str,
         cost: int,
-        owner: int,
+        owner: None | int,
         mortgaged: bool,
     ):
         super().__init__(index, name, square_type)
@@ -53,7 +53,7 @@ class Street(Ownable):
         name: str,
         square_type: str,
         cost: int,
-        owner: int,
+        owner: None | int,
         mortgaged: bool,
         color: str,
         improvement_level: int,
@@ -61,9 +61,6 @@ class Street(Ownable):
         rent_levels: dict,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
-        self.cost = cost
-        self.owner = owner
-        self.mortgaged = mortgaged
         self.color = color
         self.improvement_level = improvement_level
         self.IMPROVEMENT_COST = improvement_cost
@@ -77,14 +74,11 @@ class Railroad(Ownable):
         name: str,
         square_type: str,
         cost: int,
-        owner: int,
+        owner: None | int,
         mortgaged: bool,
         rent_levels: dict,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
-        self.cost = cost
-        self.owner = owner
-        self.mortgaged = mortgaged
         self.rent_levels = rent_levels
 
 
@@ -95,13 +89,25 @@ class Utility(Ownable):
         name: str,
         square_type: str,
         cost: int,
-        owner: int,
+        owner: None | int,
         mortgaged: bool,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
-        self.cost = cost
-        self.owner = owner
-        self.mortgaged = mortgaged
+
+
+def files_exist():
+    file_list = [
+        "data/squares.py",
+        "data/com_chest.py",
+        "data/chance.py",
+        "data/textopoly.py",
+        "TextopolyAgain.py",
+    ]
+
+    for file in file_list:
+        if not path.isfile(file):
+            print(f'File "{file}" is missing\nPlease download all files')
+            exit()
 
 
 class Files:
@@ -111,21 +117,7 @@ class Files:
         self.chance = {}
         self.file_setup()
 
-    def file_setup(self):
-        print("\nLoading files...")
-        file_list = [
-            "data/squares.py",
-            "data/com_chest.py",
-            "data/chance.py",
-            "data/textopoly.py",
-            "TextopolyAgain.py",
-        ]
-
-        for file in file_list:
-            if not path.isfile(file):
-                print(f'File "{file}" is missing\nPlease download all files')
-                return
-
+    def load_files(self):
         with (
             open("data/squares.py", "r+") as squares_file,
             open("data/com_chest.py", "r+") as com_chest_file,
@@ -136,12 +128,83 @@ class Files:
             self.com_chest = eval(com_chest_file.read())
             self.chance = eval(chance_file.read())
 
+    def file_setup(self):
+        print("\nLoading files...")
+
+        files_exist()
+        self.load_files()
+        self.dict_to_obj()
+
         print("Loaded successfully!")
 
-    def update_squares(self, index, key, value):
-        updated_square: dict = self.squares[index]
-        updated_square.update({key: value})
-        self.squares.update(updated_square)
+    def square_types(self, square):
+        square_type = square["type"]
+        if square_type == "street":
+            square_obj = Street(
+                square["index"],
+                square["name"],
+                square_type,
+                square["cost"],
+                None,
+                False,
+                square["color"],
+                0,
+                square["IMRPOVEMENT_COST"],
+                square["rent_levels"],
+            )
+        elif square_type == "railroad":
+            square_obj = Railroad(
+                square["index"],
+                square["name"],
+                square_type,
+                square["cost"],
+                None,
+                False,
+                square["rent_levels"],
+            )
+        elif square_type == "utility":
+            square_obj = Utility(
+                square["index"],
+                square["name"],
+                square_type,
+                square["cost"],
+                None,
+                False,
+            )
+        elif square_type == "comChest":
+            square_obj = ComChest(
+                square["index"],
+                square["name"],
+                square_type,
+            )
+        elif square_type == "chance":
+            square_obj = Chance(
+                square["index"],
+                square["name"],
+                square_type,
+            )
+        elif square_type == "tax":
+            square_obj = Tax(
+                square["index"],
+                square["name"],
+                square_type,
+                square["cost"]
+            )
+        elif square_type == "corner":
+            square_obj = Corner(
+                square["index"],
+                square["name"],
+                square_type,
+            )
+
+    def dict_to_obj(self):
+        for index, square in list(self.squares.items()):
+            self.square_types(square)
+
+    def update_squares(self, index, attr, value):
+        updated_square = self.squares[index]
+        setattr(updated_square, attr, value)
+        self.squares.update({index: updated_square})
 
 
 files = Files()
