@@ -1,8 +1,5 @@
 {
-    0: {
-        "name": "Advance to Go" "\n(Collect $200)",
-        "type": "go",
-    },
+    0: {"name": "Advance to Go" "\n(Collect $200)", "type": "go", "value": None},
     1: {
         "name": "Bank error in your favor. Collect $200",
         "type": "balance",
@@ -10,14 +7,12 @@
     },
     2: {"name": "Doctor's fee." "\nPay $50", "type": "balance", "value": -50},
     3: {"name": "From sale of stock you get $50", "type": "balance", "value": 50},
-    4: {
-        "name": "Get Out of Jail Free",
-        "type": "GOOJF",
-    },
+    4: {"name": "Get Out of Jail Free", "type": "GOOJF", "value": None},
     5: {
         "name": "Go to Jail.\n"
         "\nGo directly to jail, do not pass Go, do not collect $200",
         "type": "jail",
+        "value": None,
     },
     6: {
         "name": "Holiday fund matures." "\nReceive $100",

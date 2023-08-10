@@ -30,14 +30,12 @@
         "value": 28,
     },
     7: {"name": "Bank pays you dividend of $50", "type": "balance", "value": 50},
-    8: {
-        "name": "Get Out Of Jail Free",
-        "type": "GOOJF",
-    },
+    8: {"name": "Get Out Of Jail Free", "type": "GOOJF", "value": None},
     9: {
         "name": "Go to Jail."
         "\nGo directly to Jail, do not pass Go, do not collect $200",
         "type": "jail",
+        "value": None,
     },
     10: {"name": "Go Back 3 Spaces", "type": "move", "value": -3},
     11: {"name": "Speeding fine $15", "type": "balance", "value": -15},
