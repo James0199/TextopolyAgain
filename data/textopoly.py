@@ -415,8 +415,8 @@ class Player:
         if self.location + moves == 40:
             self.location = 0
             return
-        if self.location + moves > 39:
-            self.location = (self.location + moves) - 40
+        if self.location + moves > 40:
+            self.location %= 40
             print("You passed Go, receive $200")
             self.balance += 200
             return
