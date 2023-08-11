@@ -1,6 +1,13 @@
 from os import path
 from random import randint
 
+if __name__ == "__main__":
+    print(
+        "Please run the TextopolyAgain.py file,\n"
+        "This is the module that's meant to be imported."
+    )
+    exit()
+
 
 class Square:
     def __init__(self, index: int, name: str, square_type: str):
@@ -31,6 +38,53 @@ class Corner(Square):
         elif current_player.location == 30:
             print("You landed on Go To Jail!")
             current_player.go_to_jail()
+
+
+class ComChest(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+    @staticmethod
+    def landing(current_player):
+        input("Pick Card >")
+        card: ComChestCard = files.com_chest[randint(0, 14)]
+        print(card.name)
+        if card.name == "balance":
+            current_player.balance += card.name
+        elif card.card_type == "GOOJF":
+            current_player.jail_out_free = True
+        elif card.card_type == "jail":
+            current_player.go_to_jail()
+        elif card.card_type == "go":
+            current_player.location = 0
+            current_player.balance += 200
+
+
+class Chance(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+    @staticmethod
+    def landing(current_player):
+        input("Pick Card >")
+        card: ChanceCard = files.chance[randint(0, 13)]
+        print(card.name)
+        if card.card_type == "set_loc_property":
+            current_player.location = card.value
+            if current_player.location > card.value:
+                print("You passed Go")
+                current_player.balance += 200
+        elif card.card_type == "balance":
+            current_player.balance += card.value
+        elif card.card_type == "move":
+            current_player.location -= card.value
+        elif card.card_type == "GOOJF":
+            current_player.jail_out_free = True
+        elif card.card_type == "jail":
+            current_player.go_to_jail()
+        elif card.card_type == "go":
+            current_player.location = 0
+            current_player.balance += 200
 
 
 class Ownable(Square):
@@ -113,7 +167,7 @@ class Utility(Ownable):
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
 
-    def landing(self, current_player):
+    def landing(self, current_player, dice_rolls):
         pass
 
 
@@ -132,53 +186,6 @@ class ChanceCard(Cards):
 class ComChestCard(Cards):
     def __init__(self, name: str, card_type: str, value: None | int):
         super().__init__(name, card_type, value)
-
-
-class ComChest(Square):
-    def __init__(self, index, name, square_type):
-        super().__init__(index, name, square_type)
-
-    @staticmethod
-    def landing(current_player):
-        input("Pick Card >")
-        card: ComChestCard = files.com_chest[randint(0, 14)]
-        print(card.name)
-        if card.name == "balance":
-            current_player.balance += card.name
-        elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
-        elif card.card_type == "jail":
-            current_player.go_to_jail()
-        elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
-
-
-class Chance(Square):
-    def __init__(self, index, name, square_type):
-        super().__init__(index, name, square_type)
-
-    @staticmethod
-    def landing(current_player):
-        input("Pick Card >")
-        card: ChanceCard = files.chance[randint(0, 13)]
-        print(card.name)
-        if card.card_type == "set_loc_property":
-            current_player.location = card.value
-            if current_player.location > card.value:
-                print("You passed Go")
-                current_player.balance += 200
-        elif card.card_type == "balance":
-            current_player.balance += card.value
-        elif card.card_type == "move":
-            current_player.location -= card.value
-        elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
-        elif card.card_type == "jail":
-            current_player.go_to_jail()
-        elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
 
 
 class Files:
@@ -357,8 +364,7 @@ class Player:
         input("\nEnter to Continue...")
 
     def landing_square(self, current_square, dice_rolls):
-        square_type = current_square.square_type
-        if square_type == "utility":
+        if current_square.square_type == "utility":
             current_square.landing(self, dice_rolls)
             return
         current_square.landing(self)
@@ -412,15 +418,16 @@ class Player:
         )
 
     def advance(self, moves):
-        if self.location + moves == 40:
+        new_location = self.location + moves
+        if new_location == 40:
             self.location = 0
             return
-        if self.location + moves > 40:
-            self.location %= 40
+        if new_location > 40:
+            self.location = new_location % 40
             print("You passed Go, receive $200")
             self.balance += 200
             return
-        self.location += moves
+        self.location = new_location
 
     def doubles_count(self, roll_one, roll_two):
         if roll_one == roll_two:
