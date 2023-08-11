@@ -3,6 +3,7 @@
     1: {
         "name": "Advance to Go\n(Collect $200)",
         "type": "go",
+        "value": None,
     },
     2: {
         "name": "Advance to Illinois Avenue." "\nIf you pass Go, collect $200",

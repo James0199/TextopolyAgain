@@ -134,6 +134,53 @@ class ComChestCard(Cards):
         super().__init__(name, card_type, value)
 
 
+class ComChest(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+    @staticmethod
+    def landing(current_player):
+        input("Pick Card >")
+        card: ComChestCard = files.com_chest[randint(0, 14)]
+        print(card.name)
+        if card.name == "balance":
+            current_player.balance += card.name
+        elif card.card_type == "GOOJF":
+            current_player.jail_out_free = True
+        elif card.card_type == "jail":
+            current_player.go_to_jail()
+        elif card.card_type == "go":
+            current_player.location = 0
+            current_player.balance += 200
+
+
+class Chance(Square):
+    def __init__(self, index, name, square_type):
+        super().__init__(index, name, square_type)
+
+    @staticmethod
+    def landing(current_player):
+        input("Pick Card >")
+        card: ChanceCard = files.chance[randint(0, 13)]
+        print(card.name)
+        if card.card_type == "set_loc_property":
+            current_player.location = card.value
+            if current_player.location > card.value:
+                print("You passed Go")
+                current_player.balance += 200
+        elif card.card_type == "balance":
+            current_player.balance += card.value
+        elif card.card_type == "move":
+            current_player.location -= card.value
+        elif card.card_type == "GOOJF":
+            current_player.jail_out_free = True
+        elif card.card_type == "jail":
+            current_player.go_to_jail()
+        elif card.card_type == "go":
+            current_player.location = 0
+            current_player.balance += 200
+
+
 class Files:
     def __init__(self):
         self.squares = {}
@@ -269,53 +316,6 @@ class Files:
 
 
 files = Files()
-
-
-class ComChest(Square):
-    def __init__(self, index, name, square_type):
-        super().__init__(index, name, square_type)
-
-    @staticmethod
-    def landing(current_player):
-        input("Pick Card >")
-        card: ComChestCard = files.com_chest[randint(0, 14)]
-        print(card.name)
-        if card.name == "balance":
-            current_player.balance += card.name
-        elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
-        elif card.card_type == "jail":
-            current_player.go_to_jail()
-        elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
-
-
-class Chance(Square):
-    def __init__(self, index, name, square_type):
-        super().__init__(index, name, square_type)
-
-    @staticmethod
-    def landing(current_player):
-        input("Pick Card >")
-        card: ChanceCard = files.chance[randint(0, 13)]
-        print(card.name)
-        if card.card_type == "set_loc_property":
-            current_player.location = card.value
-            if current_player.location > card.value:
-                print("You passed Go")
-                current_player.balance += 200
-        elif card.card_type == "balance":
-            current_player.balance += card.value
-        elif card.card_type == "move":
-            current_player.location -= card.value
-        elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
-        elif card.card_type == "jail":
-            current_player.go_to_jail()
-        elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
 
 
 class Player:
