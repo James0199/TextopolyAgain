@@ -4,7 +4,7 @@ from random import randint
 if __name__ == "__main__":
     print(
         "Please run the TextopolyAgain.py file,\n"
-        "This is the module that's meant to be imported."
+        "This module is meant to be imported."
     )
     exit()
 
@@ -21,9 +21,9 @@ class Tax(Square):
         super().__init__(index, name, square_type)
         self.cost = cost
 
-    def landing(self, current_player):
+    def landing(self, player):
         print(f"You paid ${self.cost} in {self.name}")
-        current_player.balance -= self.cost
+        player.balance -= self.cost
 
 
 class Corner(Square):
@@ -31,13 +31,13 @@ class Corner(Square):
         super().__init__(index, name, square_type)
 
     @staticmethod
-    def landing(current_player):
-        if current_player.location == 0:
+    def landing(player):
+        if player.location == 0:
             print("You landed on Go, receive $200")
-            current_player.balance += 200
-        elif current_player.location == 30:
+            player.balance += 200
+        elif player.location == 30:
             print("You landed on Go To Jail!")
-            current_player.go_to_jail()
+            jail.jail_player(player)
 
 
 class ComChest(Square):
@@ -45,19 +45,19 @@ class ComChest(Square):
         super().__init__(index, name, square_type)
 
     @staticmethod
-    def landing(current_player):
+    def landing(player):
         input("Pick Card >")
         card: ComChestCard = files.com_chest[randint(0, 14)]
         print(card.name)
         if card.name == "balance":
-            current_player.balance += card.name
+            player.balance += card.name
         elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
+            jail.get_GOOJF_card(player)
         elif card.card_type == "jail":
-            current_player.go_to_jail()
+            jail.jail_player(player)
         elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
+            player.location = 0
+            player.balance += 200
 
 
 class Chance(Square):
@@ -65,26 +65,26 @@ class Chance(Square):
         super().__init__(index, name, square_type)
 
     @staticmethod
-    def landing(current_player):
+    def landing(player):
         input("Pick Card >")
         card: ChanceCard = files.chance[randint(0, 13)]
         print(card.name)
         if card.card_type == "set_loc_property":
-            current_player.location = card.value
-            if current_player.location > card.value:
+            player.location = card.value
+            if player.location > card.value:
                 print("You passed Go")
-                current_player.balance += 200
+                player.balance += 200
         elif card.card_type == "balance":
-            current_player.balance += card.value
+            player.balance += card.value
         elif card.card_type == "move":
-            current_player.location -= card.value
+            player.location -= card.value
         elif card.card_type == "GOOJF":
-            current_player.jail_out_free = True
+            jail.get_GOOJF_card(player)
         elif card.card_type == "jail":
-            current_player.go_to_jail()
+            jail.jail_player(player)
         elif card.card_type == "go":
-            current_player.location = 0
-            current_player.balance += 200
+            player.location = 0
+            player.balance += 200
 
 
 class Ownable(Square):
@@ -102,14 +102,14 @@ class Ownable(Square):
         self.owner = owner
         self.mortgaged = mortgaged
 
-    def purchase(self, current_player):
+    def purchase(self, player):
         option = input(
             f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
         )
-        if option == "y" and current_player.balance - self.cost >= 0:
-            current_player.balance -= self.cost
-            current_player.properties.append(current_player.location)
-            files.update_squares(self.index, "owner", current_player.index)
+        if option == "y" and player.balance - self.cost >= 0:
+            player.balance -= self.cost
+            player.properties.append(player.location)
+            files.squares[player.location].owner = player.index
             print(f"You have bought {self.name} for ${self.cost}")
 
 
@@ -133,7 +133,7 @@ class Street(Ownable):
         self.IMPROVEMENT_COST = improvement_cost
         self.rent_levels = rent_levels
 
-    def landing(self, current_player):
+    def landing(self, player):
         pass
 
 
@@ -151,7 +151,7 @@ class Railroad(Ownable):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.rent_levels = rent_levels
 
-    def landing(self, current_player):
+    def landing(self, player):
         pass
 
 
@@ -167,7 +167,7 @@ class Utility(Ownable):
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
 
-    def landing(self, current_player, dice_rolls):
+    def landing(self, player, dice_rolls):
         pass
 
 
@@ -316,35 +316,46 @@ class Files:
         self.com_chest = new_com_chest
         self.chance = new_chance
 
-    def update_squares(self, index, attr, value):
-        updated_square = self.squares[index]
-        setattr(updated_square, attr, value)
-        self.squares.update({index: updated_square})
+
+class Jail:
+    def __init__(self):
+        self.jailed_list = {}
+
+    def create_jail_space(self, player):
+        if player.index not in self.jailed_list:
+            self.jailed_list.update(
+                {player.index: {"jailed": False, "GOOJF": False, "jail_turns": 0}}
+            )
+
+    def jail_player(self, player):
+        self.create_jail_space(player)
+        self.jailed_list[player.index]["jailed"] = True
+        player.location = 10
+        print("You have been sent to Jail")
+
+    def get_GOOJF_card(self, player):
+        self.create_jail_space(player)
+        self.jailed_list[player.index]["GOOJF"] = True
+        print("You received the Get Out Of Jail Free card")
 
 
 files = Files()
+jail = Jail()
 
 
 class Player:
     def __init__(
         self,
         index: int,
-        location: int,
-        balance: int,
-        properties: list,
-        jail: bool,
-        jail_out_free: bool,
-        in_jail_turns: int,
-        doubles: int,
     ):
         self.index = index
-        self.location = location
-        self.balance = balance
-        self.properties = properties
-        self.jail = jail
-        self.jail_out_free = jail_out_free
-        self.in_jail_turns = in_jail_turns
-        self.doubles = doubles
+        self.location = 0
+        self.balance = 1500
+        self.properties = []
+        self.jail = False
+        self.jail_out_free = False
+        self.in_jail_turns = 0
+        self.doubles = 0
 
     def normal_turn(self, jail_doubles=False, roll_one=0, roll_two=0):
         if not jail_doubles:
@@ -368,11 +379,6 @@ class Player:
             current_square.landing(self, dice_rolls)
             return
         current_square.landing(self)
-
-    def go_to_jail(self):
-        self.jail = True
-        self.location = 10
-        print("You have been sent to Jail")
 
     def in_jail(self):
         print("You're in Jail\n")
@@ -437,7 +443,7 @@ class Player:
             self.doubles = 0
         if self.doubles >= 3:
             print("You rolled 3 consecutive doubles!")
-            self.go_to_jail()
+            jail.jail_player(self)
 
 
 class PlayerData:
@@ -461,23 +467,21 @@ class PlayerData:
             break
 
         for count in range(0, player_count):
-            self.player_list.update(
-                {count: Player(count, 0, 1500, [], False, False, 0, 0)}
-            )
+            self.player_list.update({count: Player(count)})
 
         self.remaining_players = [i for i in range(0, player_count)]
 
-    def bankruptcy(self, current_player: Player):
-        if current_player.balance < 0:
-            self.player_list.pop(current_player.index)
+    def bankruptcy(self, player: Player):
+        if player.balance < 0:
+            self.player_list.pop(player.index)
             return
         if len(self.player_list) == 1:
             winning_player: Player = list(self.player_list.values())[0]
             print(f"Congrats! Player {winning_player.index} won the game!")
             exit()
 
-    def turn_advance(self, current_player: Player):
-        if current_player.doubles in range(1, 3 + 1) and not current_player.jail:
+    def turn_advance(self, player: Player):
+        if player.doubles in range(1, 3 + 1) and not player.jail:
             return
         if max(list(self.player_list.keys())) == self.player_index:
             self.player_index = min(list(self.player_list.keys()))
