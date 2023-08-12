@@ -52,7 +52,7 @@ class ComChest(Square):
         if card.name == "balance":
             player.balance += card.name
         elif card.card_type == "GOOJF":
-            jail.get_GOOJF_card(player)
+            jail.GOOJF_card(player, True)
         elif card.card_type == "jail":
             jail.jail_player(player)
         elif card.card_type == "go":
@@ -79,7 +79,7 @@ class Chance(Square):
         elif card.card_type == "move":
             player.location -= card.value
         elif card.card_type == "GOOJF":
-            jail.get_GOOJF_card(player)
+            jail.GOOJF_card(player, True)
         elif card.card_type == "jail":
             jail.jail_player(player)
         elif card.card_type == "go":
@@ -333,10 +333,18 @@ class Jail:
         player.location = 10
         print("You have been sent to Jail")
 
-    def get_GOOJF_card(self, player):
-        self.create_jail_space(player)
-        self.jailed_list[player.index]["GOOJF"] = True
-        print("You received the Get Out Of Jail Free card")
+    def GOOJF_card(self, player, get_card):
+        if get_card:
+            self.create_jail_space(player)
+            self.jailed_list[player.index]["GOOJF"] = True
+            print("You received the Get Out Of Jail Free card")
+            return
+        self.jailed_list[player.index]["GOOJF"] = False
+
+    def get_out_of_jail(self, player, double_roll=(0, 0)):
+        roll_one, roll_two = double_roll
+        self.jailed_list[player.index]["jailed"] = False
+        player.normal_turn(roll_one, roll_two)
 
 
 files = Files()
@@ -357,8 +365,8 @@ class Player:
         self.in_jail_turns = 0
         self.doubles = 0
 
-    def normal_turn(self, jail_doubles=False, roll_one=0, roll_two=0):
-        if not jail_doubles:
+    def normal_turn(self, roll_one=0, roll_two=0):
+        if (roll_one, roll_two) == (0, 0):
             input("\nRoll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st: {roll_one}, 2nd: {roll_two} = " f"{roll_one + roll_two}")
@@ -398,23 +406,20 @@ class Player:
             print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
 
             if roll_one == roll_two:
-                self.get_out_of_jail((True, roll_one, roll_two))
-                return "You rolled a double!" "\nYou've been released"
+                jail.get_out_of_jail(self, (roll_one, roll_two))
+                return "You rolled a double!\nYou've been released"
 
-            return "You didn't roll a double" "\nYou'll remain in Jail"
+            self.in_jail_turns += 1
+            return "You didn't roll a double\nYou'll remain in Jail"
 
         elif option == "f" and self.jail_out_free:
-            self.get_out_of_jail()
-            return "You have used your Get Out Of Jail Free Card"
+            jail.get_out_of_jail(self)
+            jail.GOOJF_card(self, False)
+            return "You've used your Get Out Of Jail Free Card"
 
         self.balance -= 50
-        self.get_out_of_jail()
+        jail.get_out_of_jail(self)
         return "You've paid $50 bail to get out of jail"
-
-    def get_out_of_jail(self, double_roll=(False, 0, 0)):
-        jail_doubles, roll_one, roll_two = double_roll
-        self.jail = False
-        self.normal_turn(jail_doubles, roll_one, roll_two)
 
     def print_stats(self, current_square):
         print(
