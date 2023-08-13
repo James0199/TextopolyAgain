@@ -1,19 +1,19 @@
 from data.textopoly import *
 
 welcome()
-players = PlayerData()
+player_data = PlayerData()
 
 while True:
-    current_player = players.player_list[players.player_index]
-    current_square = files.squares[current_player.location]
+    player = player_data.player_list[player_data.player_index]
+    square = files.squares[player.location]
+    player_cell = jail.jailed_list[player.index]
 
-    current_player.print_stats(current_square)
+    print_stats(player, square)
 
-    if current_player.jail:
-        current_player.in_jail()
+    if player_cell["jailed"]:
+        jail.jail_options(player)
     else:
-        current_player.normal_turn()
+        player.normal_turn()
 
-    players.bankruptcy(current_player)
-
-    players.turn_advance(current_player)
+    player_data.bankruptcy(player)
+    player_data.turn_advance(player)

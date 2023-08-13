@@ -32,10 +32,7 @@ class Corner(Square):
 
     @staticmethod
     def landing(player):
-        if player.location == 0:
-            print("You landed on Go, receive $200")
-            player.balance += 200
-        elif player.location == 30:
+        if player.location == 30:
             print("You landed on Go To Jail!")
             jail.jail_player(player)
 
@@ -197,9 +194,9 @@ class Files:
 
     def load_files(self):
         with (
-            open("data/squares.py", "r+") as squares_file,
-            open("data/com_chest.py", "r+") as com_chest_file,
-            open("data/chance.py", "r+") as chance_file,
+            open("data/squares.txt", "r+") as squares_file,
+            open("data/com_chest.txt", "r+") as com_chest_file,
+            open("data/chance.txt", "r+") as chance_file,
         ):
 
             self.squares = eval(squares_file.read())
@@ -209,9 +206,9 @@ class Files:
     @staticmethod
     def files_exist():
         file_list = [
-            "data/squares.py",
-            "data/com_chest.py",
-            "data/chance.py",
+            "data/squares.txt",
+            "data/com_chest.txt",
+            "data/chance.txt",
             "data/textopoly.py",
             "TextopolyAgain.py",
         ]
@@ -286,15 +283,6 @@ class Files:
             )
             return square_obj
 
-    def file_setup(self):
-        print("\nLoading files...")
-
-        self.files_exist()
-        self.load_files()
-        self.dict_to_obj()
-
-        print("Loaded successfully!")
-
     def dict_to_obj(self):
         new_squares = {}
         new_com_chest = {}
@@ -316,35 +304,86 @@ class Files:
         self.com_chest = new_com_chest
         self.chance = new_chance
 
+    def file_setup(self):
+        print("\nLoading files...")
+
+        self.files_exist()
+        self.load_files()
+        self.dict_to_obj()
+
+        print("Loaded successfully!")
+
 
 class Jail:
     def __init__(self):
         self.jailed_list = {}
 
     def create_jail_space(self, player):
-        if player.index not in self.jailed_list:
-            self.jailed_list.update(
-                {player.index: {"jailed": False, "GOOJF": False, "jail_turns": 0}}
-            )
+        self.jailed_list.update(
+            {player.index: {"jailed": False, "GOOJF": False, "jail_turns": 0}}
+        )
 
     def jail_player(self, player):
-        self.create_jail_space(player)
-        self.jailed_list[player.index]["jailed"] = True
+        player_cell = self.jailed_list[player.index]
+
+        player_cell.update({"jailed": True})
         player.location = 10
         print("You have been sent to Jail")
 
     def GOOJF_card(self, player, get_card):
-        if get_card:
-            self.create_jail_space(player)
-            self.jailed_list[player.index]["GOOJF"] = True
-            print("You received the Get Out Of Jail Free card")
+        player_cell = self.jailed_list[player.index]
+
+        if not get_card:
+            player_cell.update({"GOOJF": True})
             return
-        self.jailed_list[player.index]["GOOJF"] = False
+
+        player_cell.update({"GOOJF": True})
+        print("You received the Get Out Of Jail Free card")
 
     def get_out_of_jail(self, player, double_roll=(0, 0)):
-        roll_one, roll_two = double_roll
-        self.jailed_list[player.index]["jailed"] = False
-        player.normal_turn(roll_one, roll_two)
+        player_cell = self.jailed_list[player.index]
+
+        player_cell.update({"jailed": False})
+        player.normal_turn(*double_roll)
+
+    def jail_options(self, player):
+        player_cell = self.jailed_list[player.index]
+
+        print("You're in Jail\n")
+        if player_cell["jail_turns"] <= 3:
+            print("(r) _R_oll doubles")
+        if player_cell["GOOJF"]:
+            print("(f) Use Get Out Of Jail _F_ree card")
+        print("([b]) Pay $50 _b_ail")
+
+        option = input("Enter choice:")
+        self.jail_escape(option, player, player_cell)
+
+    def jail_escape(self, option, player, player_cell):
+        if option == "r" and player_cell.in_jail_turns <= 3:
+            input("\nRoll dice >")
+            roll_one, roll_two = (randint(1, 6), randint(1, 6))
+            print(f"1st: {roll_one} + 2nd: {roll_two} = {roll_one + roll_two}")
+
+            if roll_one == roll_two:
+                print("You rolled a double!\nYou've been released")
+                self.get_out_of_jail(player, (roll_one, roll_two))
+                return
+
+            print("You didn't roll a double\nYou'll remain in Jail")
+            player_cell.in_jail_turns += 1
+            return
+
+        elif option == "f" and player_cell.jail_out_free:
+            print("You've used your Get Out Of Jail Free Card")
+            self.GOOJF_card(player, False)
+            self.get_out_of_jail(player)
+            return
+
+        player.balance -= 50
+        print("You've paid $50 bail to get out of jail")
+        self.get_out_of_jail(player)
+        return
 
 
 files = Files()
@@ -375,12 +414,12 @@ class Player:
 
         input()
         self.advance(roll_one + roll_two)
-        current_square = files.squares[self.location]
-        print(f"New square:\n{self.location} - " f"{current_square.name}")
+        square = files.squares[self.location]
+        print(f"New square:\n{self.location} - " f"{square.name}")
 
-        self.landing_square(current_square, (roll_one, roll_two))
+        self.landing_square(square, (roll_one, roll_two))
 
-        input("\nEnter to Continue...")
+        input("\nEnd turn...")
 
     def landing_square(self, current_square, dice_rolls):
         if current_square.square_type == "utility":
@@ -388,52 +427,9 @@ class Player:
             return
         current_square.landing(self)
 
-    def in_jail(self):
-        print("You're in Jail\n")
-        if self.in_jail_turns <= 3:
-            print("(r) _R_oll doubles")
-        if self.jail_out_free:
-            print("(f) Use Get Out Of Jail _F_ree card")
-        print("([b]) Pay $50 _b_ail")
-        option = input("Enter choice:")
-
-        print(self.jail_options(option))
-
-    def jail_options(self, option):
-        if option == "r" and self.in_jail_turns <= 3:
-            input("\nRoll dice >")
-            roll_one, roll_two = (randint(1, 6), randint(1, 6))
-            print(f"1st roll: {roll_one}, 2nd roll: {roll_two}")
-
-            if roll_one == roll_two:
-                jail.get_out_of_jail(self, (roll_one, roll_two))
-                return "You rolled a double!\nYou've been released"
-
-            self.in_jail_turns += 1
-            return "You didn't roll a double\nYou'll remain in Jail"
-
-        elif option == "f" and self.jail_out_free:
-            jail.get_out_of_jail(self)
-            jail.GOOJF_card(self, False)
-            return "You've used your Get Out Of Jail Free Card"
-
-        self.balance -= 50
-        jail.get_out_of_jail(self)
-        return "You've paid $50 bail to get out of jail"
-
-    def print_stats(self, current_square):
-        print(
-            f"\nPlayer {self.index + 1}'s turn"
-            f"\nCurrent balance: {self.balance}"
-            f"\nCurrent square:\n{self.location} - {current_square.name}"
-        )
-
     def advance(self, moves):
         new_location = self.location + moves
-        if new_location == 40:
-            self.location = 0
-            return
-        if new_location > 40:
+        if new_location >= 40:
             self.location = new_location % 40
             print("You passed Go, receive $200")
             self.balance += 200
@@ -473,8 +469,10 @@ class PlayerData:
 
         for count in range(0, player_count):
             self.player_list.update({count: Player(count)})
-
         self.remaining_players = [i for i in range(0, player_count)]
+
+        for player in list(self.player_list.values()):
+            jail.create_jail_space(player)
 
     def bankruptcy(self, player: Player):
         if player.balance < 0:
@@ -486,10 +484,13 @@ class PlayerData:
             exit()
 
     def turn_advance(self, player: Player):
-        if player.doubles in range(1, 3 + 1) and not player.jail:
+        player_cell = jail.jailed_list[player.index]
+        players = list(self.player_list.keys())
+
+        if 1 < player.doubles <= 3 and not player_cell["jailed"]:
             return
-        if max(list(self.player_list.keys())) == self.player_index:
-            self.player_index = min(list(self.player_list.keys()))
+        if max(players) == self.player_index:
+            self.player_index = min(players)
             return
         self.player_index += 1
 
@@ -498,7 +499,15 @@ def welcome():
     input(
         "\nWelcome to Textopoly!\n"
         "\nNotes:"
-        "\nPress enter to advance prompts."
-        "\nIf you don't choose a valid option while in jail,"
-        "\nYou'll automatically pay $50 bail."
+        "\n- Press enter to advance prompts."
+        "\n- If you don't choose a valid option while in jail,"
+        "\n  You'll automatically pay $50 bail."
+    )
+
+
+def print_stats(player, square):
+    print(
+        f"\nPlayer {player.index + 1}'s turn"
+        f"\nCurrent balance: {player.balance}"
+        f"\nCurrent square:\n{player.location} - {square.name}"
     )
