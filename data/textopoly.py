@@ -155,6 +155,21 @@ class Railroad(Ownable):
             self.purchase(player)
             return
 
+        owner_player = player_data.player_list[self.owner]
+        owned_railroads = [
+            railroad
+            for railroad in (5, 15, 25, 35)
+            if self.owner == files.squares[railroad].owner
+        ]
+        owned_railroads = len(owned_railroads)
+        rent = 25 * (2**owned_railroads)
+        print(
+            f"Player {self.owner} owns {owned_railroads} railroads\n"
+            f"You'll pay ${rent} to player {self.owner}"
+        )
+        player.balance -= rent
+        owner_player.balance += rent
+
 
 class Utility(Ownable):
     def __init__(
@@ -168,31 +183,28 @@ class Utility(Ownable):
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         if self.index == 12:
-            self.other_util: Utility = files.squares[28]
+            self.other_util = 28
         else:
-            self.other_util: Utility = files.squares[12]
+            self.other_util = 12
 
-    def landing(self, player, dice_rolls):
+    def landing(self, player, dice_roll):
         owner_player: Player = player_data.player_list[self.owner]
 
         if self.owner is None:
             self.purchase(player)
             return
 
-        if self.owner == self.other_util.owner:
-            print(
-                "This utility's owner owns both utilities,\n"
-                "You'll pay 10 times your dice roll to the owner"
-            )
+        print(f"Player {self.owner} owns this utility,")
+        if self.owner == files.squares[self.other_util].owner:
+            print("And also owns the other utility,")
             multiplier = 10
         else:
-            print(
-                "This utility's owner owns only this utility,\n"
-                "You'll pay 4 times your dice roll to the owner"
-            )
             multiplier = 4
-        player.balance -= dice_rolls * multiplier
-        owner_player.balance += dice_rolls * multiplier
+        print(
+            f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}"
+        )
+        player.balance -= dice_roll * multiplier
+        owner_player.balance += dice_roll * multiplier
 
 
 class Cards:
@@ -426,9 +438,6 @@ class Player:
         self.location = 0
         self.balance = 1500
         self.properties = []
-        self.jail = False
-        self.jail_out_free = False
-        self.in_jail_turns = 0
         self.doubles = 0
 
     def normal_turn(self, roll_one=0, roll_two=0):
