@@ -1,7 +1,6 @@
 from data.textopoly import *
 
 welcome()
-player_data = PlayerData()
 
 while True:
     player = player_data.player_list[player_data.player_index]

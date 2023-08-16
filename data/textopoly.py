@@ -131,7 +131,9 @@ class Street(Ownable):
         self.rent_levels = rent_levels
 
     def landing(self, player):
-        pass
+        if self.owner is None:
+            self.purchase(player)
+            return
 
 
 class Railroad(Ownable):
@@ -149,7 +151,9 @@ class Railroad(Ownable):
         self.rent_levels = rent_levels
 
     def landing(self, player):
-        pass
+        if self.owner is None:
+            self.purchase(player)
+            return
 
 
 class Utility(Ownable):
@@ -163,9 +167,32 @@ class Utility(Ownable):
         mortgaged: bool,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
+        if self.index == 12:
+            self.other_util: Utility = files.squares[28]
+        else:
+            self.other_util: Utility = files.squares[12]
 
     def landing(self, player, dice_rolls):
-        pass
+        owner_player: Player = player_data.player_list[self.owner]
+
+        if self.owner is None:
+            self.purchase(player)
+            return
+
+        if self.owner == self.other_util.owner:
+            print(
+                "This utility's owner owns both utilities,\n"
+                "You'll pay 10 times your dice roll to the owner"
+            )
+            multiplier = 10
+        else:
+            print(
+                "This utility's owner owns only this utility,\n"
+                "You'll pay 4 times your dice roll to the owner"
+            )
+            multiplier = 4
+        player.balance -= dice_rolls * multiplier
+        owner_player.balance += dice_rolls * multiplier
 
 
 class Cards:
@@ -417,15 +444,12 @@ class Player:
         square = files.squares[self.location]
         print(f"New square:\n{self.location} - " f"{square.name}")
 
-        self.landing_square(square, (roll_one, roll_two))
+        if square.square_type == "utility":
+            square.landing(self, roll_one + roll_two)
+        else:
+            square.landing(self)
 
         input("\nEnd turn...")
-
-    def landing_square(self, current_square, dice_rolls):
-        if current_square.square_type == "utility":
-            current_square.landing(self, dice_rolls)
-            return
-        current_square.landing(self)
 
     def advance(self, moves):
         new_location = self.location + moves
@@ -493,6 +517,9 @@ class PlayerData:
             self.player_index = min(players)
             return
         self.player_index += 1
+
+
+player_data = PlayerData()
 
 
 def welcome():
