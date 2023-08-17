@@ -135,6 +135,21 @@ class Street(Ownable):
             self.purchase(player)
             return
 
+        owned_color_set = all(
+            [square.owner == self.owner for square in files.color_sets[self.color]]
+        )
+        owner_player = player_data.player_list[self.owner]
+        print(f"Player {self.owner+1} owns this street")
+        
+        rent = self.rent_levels[self.improvement_level]
+        if self.improvement_level > 0:
+            print(f"And this street has {self.improvement_level} houses\n")
+        if owned_color_set and self.improvement_level == 0:
+            print("And also owns the color set")
+            rent *= 2
+        player.balance -= rent
+        owner_player.balance += rent
+
 
 class Railroad(Ownable):
     def __init__(
@@ -156,16 +171,18 @@ class Railroad(Ownable):
             return
 
         owner_player = player_data.player_list[self.owner]
-        owned_railroads = [
-            railroad
-            for railroad in (5, 15, 25, 35)
-            if self.owner == files.squares[railroad].owner
-        ]
-        owned_railroads = len(owned_railroads)
+        owned_railroads = len(
+            [
+                railroad
+                for railroad in (5, 15, 25, 35)
+                if self.owner == files.squares[railroad].owner
+            ]
+        )
         rent = 25 * (2**owned_railroads)
         print(
-            f"Player {self.owner} owns {owned_railroads} railroads\n"
-            f"You'll pay ${rent} to player {self.owner}"
+            f"Player {self.owner+1} owns this railroad,\n"
+            f"And owns {owned_railroads} railroads\n"
+            f"You'll pay ${rent} to player {self.owner+1}"
         )
         player.balance -= rent
         owner_player.balance += rent
@@ -194,15 +211,12 @@ class Utility(Ownable):
             self.purchase(player)
             return
 
-        print(f"Player {self.owner} owns this utility,")
+        print(f"Player {self.owner+1} owns this utility,")
+        multiplier = 4
         if self.owner == files.squares[self.other_util].owner:
             print("And also owns the other utility,")
             multiplier = 10
-        else:
-            multiplier = 4
-        print(
-            f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}"
-        )
+        print(f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}")
         player.balance -= dice_roll * multiplier
         owner_player.balance += dice_roll * multiplier
 
@@ -229,6 +243,7 @@ class Files:
         self.squares = {}
         self.com_chest = {}
         self.chance = {}
+        self.color_sets = {}
         self.file_setup()
 
     def load_files(self):
@@ -236,11 +251,13 @@ class Files:
             open("data/squares.txt", "r+") as squares_file,
             open("data/com_chest.txt", "r+") as com_chest_file,
             open("data/chance.txt", "r+") as chance_file,
+            open("data/color_sets.txt", "r+") as color_sets_file,
         ):
 
             self.squares = eval(squares_file.read())
             self.com_chest = eval(com_chest_file.read())
             self.chance = eval(chance_file.read())
+            self.color_sets = eval(color_sets_file.read())
 
     @staticmethod
     def files_exist():
@@ -248,6 +265,7 @@ class Files:
             "data/squares.txt",
             "data/com_chest.txt",
             "data/chance.txt",
+            "data/color_sets.txt",
             "data/textopoly.py",
             "TextopolyAgain.py",
         ]
