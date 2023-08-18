@@ -44,9 +44,9 @@ class ComChest(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card: Card = files.com_chest[randint(0, 14)]
-        print(card.name)
-        match card.name:
+        card = files.com_chest[randint(0, 14)]
+        print(card["name"])
+        match card["name"]:
             case "balance":
                 player.balance += card.name
             case "GOOJF":
@@ -65,9 +65,9 @@ class Chance(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card: Card = files.chance[randint(0, 13)]
-        print(card.name)
-        match card.card_type:
+        card = files.chance[randint(0, 13)]
+        print(card["name"])
+        match card["card_type"]:
             case "set_loc_property":
                 player.location = card.value
                 if player.location > card.value:
@@ -338,24 +338,12 @@ class Files:
 
     def dict_to_obj(self):
         new_squares = {}
-        new_com_chest = {}
-        new_chance = {}
 
         for index, square in list(self.squares.items()):
             square_obj = self.square_dto(square)
             new_squares.update({index: square_obj})
 
-        for index, card in list(self.com_chest.items()):
-            card_obj = Card(card["name"], card["type"], card["value"], False)
-            new_com_chest.update({index: card_obj})
-
-        for index, card in list(self.chance.items()):
-            card_obj = Card(card["name"], card["type"], card["value"], True)
-            new_chance.update({index: card_obj})
-
         self.squares = new_squares
-        self.com_chest = new_com_chest
-        self.chance = new_chance
 
     def file_setup(self):
         print("\nLoading files...")
