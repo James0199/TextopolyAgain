@@ -44,17 +44,18 @@ class ComChest(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card: ComChestCard = files.com_chest[randint(0, 14)]
+        card: Card = files.com_chest[randint(0, 14)]
         print(card.name)
-        if card.name == "balance":
-            player.balance += card.name
-        elif card.card_type == "GOOJF":
-            jail.GOOJF_card(player, True)
-        elif card.card_type == "jail":
-            jail.jail_player(player)
-        elif card.card_type == "go":
-            player.location = 0
-            player.balance += 200
+        match card.name:
+            case "balance":
+                player.balance += card.name
+            case "GOOJF":
+                jail.GOOJF_card(player, True)
+            case "jail":
+                jail.jail_player(player)
+            case "go":
+                player.location = 0
+                player.balance += 200
 
 
 class Chance(Square):
@@ -64,24 +65,25 @@ class Chance(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card: ChanceCard = files.chance[randint(0, 13)]
+        card: Card = files.chance[randint(0, 13)]
         print(card.name)
-        if card.card_type == "set_loc_property":
-            player.location = card.value
-            if player.location > card.value:
-                print("You passed Go")
+        match card.card_type:
+            case "set_loc_property":
+                player.location = card.value
+                if player.location > card.value:
+                    print("You passed Go")
+                    player.balance += 200
+            case "balance":
+                player.balance += card.value
+            case "move":
+                player.location -= card.value
+            case "GOOJF":
+                jail.GOOJF_card(player, True)
+            case "jail":
+                jail.jail_player(player)
+            case "go":
+                player.location = 0
                 player.balance += 200
-        elif card.card_type == "balance":
-            player.balance += card.value
-        elif card.card_type == "move":
-            player.location -= card.value
-        elif card.card_type == "GOOJF":
-            jail.GOOJF_card(player, True)
-        elif card.card_type == "jail":
-            jail.jail_player(player)
-        elif card.card_type == "go":
-            player.location = 0
-            player.balance += 200
 
 
 class Ownable(Square):
@@ -140,7 +142,7 @@ class Street(Ownable):
         )
         owner_player = player_data.player_list[self.owner]
         print(f"Player {self.owner+1} owns this street")
-        
+
         rent = self.rent_levels[self.improvement_level]
         if self.improvement_level > 0:
             print(f"And this street has {self.improvement_level} houses\n")
@@ -216,26 +218,19 @@ class Utility(Ownable):
         if self.owner == files.squares[self.other_util].owner:
             print("And also owns the other utility,")
             multiplier = 10
-        print(f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}")
+        print(
+            f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}"
+        )
         player.balance -= dice_roll * multiplier
         owner_player.balance += dice_roll * multiplier
 
 
-class Cards:
-    def __init__(self, name: str, card_type: str, value: None | int):
+class Card:
+    def __init__(self, name: str, card_type: str, value: None | int, chance: bool):
+        self.chance = chance
         self.name = name
         self.card_type = card_type
         self.value = value
-
-
-class ChanceCard(Cards):
-    def __init__(self, name: str, card_type: str, value: None | int):
-        super().__init__(name, card_type, value)
-
-
-class ComChestCard(Cards):
-    def __init__(self, name: str, card_type: str, value: None | int):
-        super().__init__(name, card_type, value)
 
 
 class Files:
@@ -278,67 +273,68 @@ class Files:
     @staticmethod
     def square_dto(square):
         square_type = square["type"]
-        if square_type == "street":
-            square_obj = Street(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-                square["color"],
-                0,
-                square["IMPROVEMENT_COST"],
-                square["rent_levels"],
-            )
-            return square_obj
-        elif square_type == "railroad":
-            square_obj = Railroad(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-                square["rent_levels"],
-            )
-            return square_obj
-        elif square_type == "utility":
-            square_obj = Utility(
-                square["index"],
-                square["name"],
-                square_type,
-                square["cost"],
-                None,
-                False,
-            )
-            return square_obj
-        elif square_type == "comChest":
-            square_obj = ComChest(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-            return square_obj
-        elif square_type == "chance":
-            square_obj = Chance(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-            return square_obj
-        elif square_type == "tax":
-            square_obj = Tax(
-                square["index"], square["name"], square_type, square["cost"]
-            )
-            return square_obj
-        elif square_type == "corner":
-            square_obj = Corner(
-                square["index"],
-                square["name"],
-                square_type,
-            )
-            return square_obj
+        match square_type:
+            case "street":
+                square_obj = Street(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                    square["cost"],
+                    None,
+                    False,
+                    square["color"],
+                    0,
+                    square["IMPROVEMENT_COST"],
+                    square["rent_levels"],
+                )
+                return square_obj
+            case "railroad":
+                square_obj = Railroad(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                    square["cost"],
+                    None,
+                    False,
+                    square["rent_levels"],
+                )
+                return square_obj
+            case "utility":
+                square_obj = Utility(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                    square["cost"],
+                    None,
+                    False,
+                )
+                return square_obj
+            case "comChest":
+                square_obj = ComChest(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                )
+                return square_obj
+            case "chance":
+                square_obj = Chance(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                )
+                return square_obj
+            case "tax":
+                square_obj = Tax(
+                    square["index"], square["name"], square_type, square["cost"]
+                )
+                return square_obj
+            case "corner":
+                square_obj = Corner(
+                    square["index"],
+                    square["name"],
+                    square_type,
+                )
+                return square_obj
 
     def dict_to_obj(self):
         new_squares = {}
@@ -350,11 +346,11 @@ class Files:
             new_squares.update({index: square_obj})
 
         for index, card in list(self.com_chest.items()):
-            card_obj = ComChestCard(card["name"], card["type"], card["value"])
+            card_obj = Card(card["name"], card["type"], card["value"], False)
             new_com_chest.update({index: card_obj})
 
         for index, card in list(self.chance.items()):
-            card_obj = ChanceCard(card["name"], card["type"], card["value"])
+            card_obj = Card(card["name"], card["type"], card["value"], True)
             new_chance.update({index: card_obj})
 
         self.squares = new_squares
