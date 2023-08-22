@@ -8,6 +8,13 @@ if __name__ == "__main__":
     )
     exit()
 
+# Debugging constants
+LOCATION_LOCK = False
+DOUBLES_LOCK = False
+START_LOCATION = 0
+SKIP_DICE = False
+SINGLE_PLAYER = False
+
 
 class Square:
     def __init__(self, index: int, name: str, square_type: str):
@@ -44,7 +51,7 @@ class ComChest(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card = files.com_chest[randint(0, 14)]
+        card = files.com_chest[randint(0, 13)]
         print(card["name"])
         match card["name"]:
             case "balance":
@@ -65,7 +72,7 @@ class Chance(Square):
     @staticmethod
     def landing(player):
         input("Pick Card >")
-        card = files.chance[randint(0, 13)]
+        card = files.chance[randint(0, 12)]
         print(card["name"])
         match card["card_type"]:
             case "set_loc_property":
@@ -437,13 +444,13 @@ class Player:
         index: int,
     ):
         self.index = index
-        self.location = 0
+        self.location = START_LOCATION
         self.balance = 1500
         self.properties = []
         self.doubles = 0
 
     def normal_turn(self, roll_one=0, roll_two=0):
-        if (roll_one, roll_two) == (0, 0):
+        if (roll_one, roll_two) == (0, 0) and not SKIP_DICE:
             input("\nRoll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st: {roll_one}, 2nd: {roll_two} = " f"{roll_one + roll_two}")
@@ -472,11 +479,12 @@ class Player:
         self.location = new_location
 
     def doubles_count(self, roll_one, roll_two):
-        if roll_one == roll_two:
+        if roll_one == roll_two and not DOUBLES_LOCK:
             print("Doubles!")
             self.doubles += 1
         else:
             self.doubles = 0
+
         if self.doubles >= 3:
             print("You rolled 3 consecutive doubles!")
             jail.jail_player(self)
@@ -491,7 +499,8 @@ class PlayerData:
         self.player_setup()
 
     def player_setup(self):
-        while True:
+        player_count = 1
+        while not SINGLE_PLAYER:
             player_count = input("\nHow many players?(2-8):")
             if not player_count.isdigit():
                 print("Try again")
@@ -522,11 +531,12 @@ class PlayerData:
         player_cell = jail.jailed_list[player.index]
         players = list(self.player_list.keys())
 
-        if 1 < player.doubles <= 3 and not player_cell["jailed"]:
+        if 1 < player.doubles <= 3 and not player_cell["jailed"] or LOCATION_LOCK:
             return
         if max(players) == self.player_index:
             self.player_index = min(players)
             return
+
         self.player_index += 1
 
 
