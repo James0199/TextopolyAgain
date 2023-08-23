@@ -1,5 +1,6 @@
 from os import path
 from random import randint
+from data.config import *
 
 if __name__ == "__main__":
     print(
@@ -7,13 +8,6 @@ if __name__ == "__main__":
         "This module is meant to be imported."
     )
     exit()
-
-# Debugging constants
-LOCATION_LOCK = False
-DOUBLES_LOCK = False
-START_LOCATION = 0
-SKIP_DICE = False
-SINGLE_PLAYER = False
 
 
 class Square:
@@ -56,8 +50,8 @@ class ComChest(Square):
         match card["name"]:
             case "balance":
                 player.balance += card.name
-            case "GOOJF":
-                jail.GOOJF_card(player, True)
+            case "goojf":
+                jail.goojf_card(player, True)
             case "jail":
                 jail.jail_player(player)
             case "go":
@@ -84,8 +78,8 @@ class Chance(Square):
                 player.balance += card.value
             case "move":
                 player.location -= card.value
-            case "GOOJF":
-                jail.GOOJF_card(player, True)
+            case "goojf":
+                jail.goojf_card(player, True)
             case "jail":
                 jail.jail_player(player)
             case "go":
@@ -368,30 +362,36 @@ class Jail:
 
     def create_jail_space(self, player):
         self.jailed_list.update(
-            {player.index: {"jailed": False, "GOOJF": False, "jail_turns": 0}}
+            {
+                player.index: {
+                    "jailed": START_JAILED,
+                    "goojf": START_GOOJF,
+                    "jail_turns": 0,
+                }
+            }
         )
 
     def jail_player(self, player):
         player_cell = self.jailed_list[player.index]
 
-        player_cell.update({"jailed": True})
+        player_cell["jailed"] = True
         player.location = 10
         print("You have been sent to Jail")
 
-    def GOOJF_card(self, player, get_card):
+    def goojf_card(self, player, get_card):
         player_cell = self.jailed_list[player.index]
 
         if not get_card:
-            player_cell.update({"GOOJF": True})
+            player_cell["goojf"] -= 1
             return
 
-        player_cell.update({"GOOJF": True})
+        player_cell["goojf"] += 1
         print("You received the Get Out Of Jail Free card")
 
     def get_out_of_jail(self, player, double_roll=(0, 0)):
         player_cell = self.jailed_list[player.index]
 
-        player_cell.update({"jailed": False})
+        player_cell["jailed"] = False
         player.normal_turn(*double_roll)
 
     def jail_options(self, player):
@@ -400,7 +400,7 @@ class Jail:
         print("You're in Jail\n")
         if player_cell["jail_turns"] <= 3:
             print("(r) _R_oll doubles")
-        if player_cell["GOOJF"]:
+        if player_cell["goojf"]:
             print("(f) Use Get Out Of Jail _F_ree card")
         print("([b]) Pay $50 _b_ail")
 
@@ -408,7 +408,7 @@ class Jail:
         self.jail_escape(option, player, player_cell)
 
     def jail_escape(self, option, player, player_cell):
-        if option == "r" and player_cell.in_jail_turns <= 3:
+        if option == "r" and player_cell["jail_turns"] <= 3:
             input("\nRoll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st: {roll_one} + 2nd: {roll_two} = {roll_one + roll_two}")
@@ -419,12 +419,12 @@ class Jail:
                 return
 
             print("You didn't roll a double\nYou'll remain in Jail")
-            player_cell.in_jail_turns += 1
+            player_cell["jail_turns"] += 1
             return
 
-        elif option == "f" and player_cell.jail_out_free:
+        elif option == "f" and player_cell["goojf"] > 0:
             print("You've used your Get Out Of Jail Free Card")
-            self.GOOJF_card(player, False)
+            self.goojf_card(player, False)
             self.get_out_of_jail(player)
             return
 
@@ -445,9 +445,11 @@ class Player:
     ):
         self.index = index
         self.location = START_LOCATION
-        self.balance = 1500
+        self.balance = START_BALANCE
         self.properties = []
-        self.doubles = 0
+        if START_PROPERTIES:
+            self.starting_properties()
+        self.doubles = START_DOUBLES
 
     def normal_turn(self, roll_one=0, roll_two=0):
         if (roll_one, roll_two) == (0, 0) and not SKIP_DICE:
@@ -489,6 +491,14 @@ class Player:
             print("You rolled 3 consecutive doubles!")
             jail.jail_player(self)
 
+    def starting_properties(self):
+        player_properties = START_PROPERTIES[self.index]
+        self.properties = [
+            files.square_dto(files.squares[square]) for square in player_properties
+        ]
+        for player_property in self.properties:
+            player_property.owner = self.index
+
 
 class PlayerData:
     def __init__(self):
@@ -519,13 +529,18 @@ class PlayerData:
             jail.create_jail_space(player)
 
     def bankruptcy(self, player: Player):
+        if not BANKRUPTCY_CHECK:
+            return
+
         if player.balance < 0:
             self.player_list.pop(player.index)
             return
-        if len(self.player_list) == 1:
+        if len(self.player_list) == 1 and not SINGLE_PLAYER:
             winning_player: Player = list(self.player_list.values())[0]
             print(f"Congrats! Player {winning_player.index} won the game!")
             exit()
+
+        print("No one won the game!")
 
     def turn_advance(self, player: Player):
         player_cell = jail.jailed_list[player.index]
@@ -547,7 +562,7 @@ def welcome():
     input(
         "\nWelcome to Textopoly!\n"
         "\nNotes:"
-        "\n- Press enter to advance prompts."
+        "\n- Press enter (return) to advance prompts."
         "\n- If you don't choose a valid option while in jail,"
         "\n  You'll automatically pay $50 bail."
     )
