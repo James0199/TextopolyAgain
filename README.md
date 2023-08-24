@@ -1,4 +1,10 @@
 # Text-based Monopoly Again
-### Revision of my horribly written monopoly clone in Python but text-only
+### A Revision of my horribly written text-only monopoly clone in Python.
 
-Fun fact: Most people are missing the point of Monopoly
+
+## Game modification
+You can modify some options in the data/config.py file to modify some parts of the game.  
+This was originally meant for debugging but this also works.
+
+## Fun Fact
+Most people are missing the point of Monopoly
