@@ -33,6 +33,8 @@ class Corner(Square):
 
     @staticmethod
     def landing(player):
+        if SKIP_JAIL:
+            return
         if player.location == 30:
             print("You landed on Go To Jail!")
             jail.jail_player(player)
@@ -349,7 +351,8 @@ class Files:
     def file_setup(self):
         print("\nLoading files...")
 
-        self.files_exist()
+        if FILE_CHECK:
+            self.files_exist()
         self.load_files()
         self.dict_to_obj()
 
@@ -400,7 +403,7 @@ class Jail:
         print("You're in Jail\n")
         if player_cell["jail_turns"] <= 3:
             print("(r) _R_oll doubles")
-        if player_cell["goojf"]:
+        if player_cell["goojf"] > 0:
             print("(f) Use Get Out Of Jail _F_ree card")
         print("([b]) Pay $50 _b_ail")
 
@@ -510,7 +513,9 @@ class PlayerData:
 
     def player_setup(self):
         player_count = 1
-        while not SINGLE_PLAYER:
+        if PLAYER_COUNT_OVERRIDE > 0:
+            player_count = PLAYER_COUNT_OVERRIDE
+        while not SINGLE_PLAYER and not PLAYER_COUNT_OVERRIDE:
             player_count = input("\nHow many players?(2-8):")
             if not player_count.isdigit():
                 print("Try again")
@@ -531,16 +536,17 @@ class PlayerData:
     def bankruptcy(self, player: Player):
         if not BANKRUPTCY_CHECK:
             return
-
         if player.balance < 0:
             self.player_list.pop(player.index)
-            return
+
         if len(self.player_list) == 1 and not SINGLE_PLAYER:
             winning_player: Player = list(self.player_list.values())[0]
             print(f"Congrats! Player {winning_player.index} won the game!")
             exit()
 
-        print("No one won the game!")
+        if len(self.player_list) == 0:
+            print("No one won the game!")
+            exit()
 
     def turn_advance(self, player: Player):
         player_cell = jail.jailed_list[player.index]
