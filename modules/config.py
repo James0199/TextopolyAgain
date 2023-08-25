@@ -21,10 +21,11 @@ START_DOUBLES = 0  # 0
 START_JAILED = False  # False
 START_GOOJF = 0  # 0
 START_PROPERTIES = {}  # {}
-# Structure: {player.index: [property.index, ...], ...}
+# Structure: {player.index: {"property_type": [property.index, ...], ...}, ...}
 
 BANKRUPTCY_CHECK = True  # True
 FILE_CHECK = True  # True
+LOAD_FILES = True  # True
 SKIP_DICE = True  # False
 SKIP_JAIL = False  # False
 SINGLE_PLAYER = False  # False

@@ -1,6 +1,7 @@
 from os import path
 from random import randint
-from data.config import *
+from abc import ABC, abstractmethod
+from modules.config import *
 
 if __name__ == "__main__":
     print(
@@ -10,7 +11,7 @@ if __name__ == "__main__":
     exit()
 
 
-class Square:
+class Square(ABC):
     def __init__(self, index: int, name: str, square_type: str):
         self.index = index
         self.name = name
@@ -89,7 +90,7 @@ class Chance(Square):
                 player.balance += 200
 
 
-class Ownable(Square):
+class Ownable(Square, ABC):
     def __init__(
         self,
         index: int,
@@ -104,15 +105,9 @@ class Ownable(Square):
         self.owner = owner
         self.mortgaged = mortgaged
 
+    @abstractmethod
     def purchase(self, player):
-        option = input(
-            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
-        )
-        if option == "y" and player.balance - self.cost >= 0:
-            player.balance -= self.cost
-            player.properties.append(player.location)
-            files.squares[player.location].owner = player.index
-            print(f"You have bought {self.name} for ${self.cost}")
+        pass
 
 
 class Street(Ownable):
@@ -135,23 +130,42 @@ class Street(Ownable):
         self.IMPROVEMENT_COST = improvement_cost
         self.rent_levels = rent_levels
 
+    def purchase(self, player):
+        option = input(
+            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
+        )
+        if option == "y" and player.balance - self.cost >= 0:
+            player.balance -= self.cost
+            player.properties["street"].append(self.index)
+            self.update_color_set(player)
+            files.squares[player.location].owner = player.index
+            print(f"You have bought {self.name} for ${self.cost}")
+
+    def update_color_set(self, player):
+        color_set = files.property_sets["street"][self.color]
+        color_set_squares = [files.squares[square] for square in color_set]
+
+        if all([street.owner == player.index for street in color_set_squares]):
+            player.color_sets.append(self.color)
+            print(f"Player {player.index} got the {self.color} color set!")
+
     def landing(self, player):
         if self.owner is None:
             self.purchase(player)
             return
 
-        owned_color_set = all(
-            [square.owner == self.owner for square in files.color_sets[self.color]]
-        )
         owner_player = player_data.player_list[self.owner]
         print(f"Player {self.owner+1} owns this street")
+        if owner_player is player:
+            return
 
         rent = self.rent_levels[self.improvement_level]
         if self.improvement_level > 0:
             print(f"And this street has {self.improvement_level} houses\n")
-        if owned_color_set and self.improvement_level == 0:
+        elif self.color in player.color_sets and self.improvement_level == 0:
             print("And also owns the color set")
             rent *= 2
+        print(f"You'll pay ${rent} to player {owner_player.index+1}")
         player.balance -= rent
         owner_player.balance += rent
 
@@ -170,6 +184,16 @@ class Railroad(Ownable):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.rent_levels = rent_levels
 
+    def purchase(self, player):
+        option = input(
+            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
+        )
+        if option == "y" and player.balance - self.cost >= 0:
+            player.balance -= self.cost
+            player.properties["railroad"].append(self.index)
+            files.squares[player.location].owner = player.index
+            print(f"You have bought {self.name} for ${self.cost}")
+
     def landing(self, player):
         if self.owner is None:
             self.purchase(player)
@@ -179,7 +203,7 @@ class Railroad(Ownable):
         owned_railroads = len(
             [
                 railroad
-                for railroad in (5, 15, 25, 35)
+                for railroad in files.property_sets["railroad"]
                 if self.owner == files.squares[railroad].owner
             ]
         )
@@ -204,25 +228,36 @@ class Utility(Ownable):
         mortgaged: bool,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
-        if self.index == 12:
-            self.other_util = 28
-        else:
-            self.other_util = 12
+        self.other_util = [
+            files.squares[util]
+            for util in files.property_sets["utility"]
+            if util != self.index
+        ][0]
+
+    def purchase(self, player):
+        option = input(
+            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
+        )
+        if option == "y" and player.balance - self.cost >= 0:
+            player.balance -= self.cost
+            player.properties["utility"].append(self.index)
+            files.squares[player.location].owner = player.index
+            print(f"You have bought {self.name} for ${self.cost}")
 
     def landing(self, player, dice_roll):
-        owner_player: Player = player_data.player_list[self.owner]
-
         if self.owner is None:
             self.purchase(player)
             return
 
+        owner_player: Player = player_data.player_list[self.owner]
         print(f"Player {self.owner+1} owns this utility,")
         multiplier = 4
-        if self.owner == files.squares[self.other_util].owner:
+        if self.owner == self.other_util.owner:
             print("And also owns the other utility,")
             multiplier = 10
         print(
-            f"You'll pay {multiplier} times your dice roll ({dice_roll}) to player {self.owner+1}"
+            f"You'll pay {multiplier} times your dice roll ({dice_roll}) "
+            f"to player {self.owner+1}"
         )
         player.balance -= dice_roll * multiplier
         owner_player.balance += dice_roll * multiplier
@@ -241,21 +276,22 @@ class Files:
         self.squares = {}
         self.com_chest = {}
         self.chance = {}
-        self.color_sets = {}
+        self.property_sets = {}
         self.file_setup()
 
     def load_files(self):
+        if not LOAD_FILES:
+            return
         with (
             open("data/squares.txt", "r+") as squares_file,
             open("data/com_chest.txt", "r+") as com_chest_file,
             open("data/chance.txt", "r+") as chance_file,
-            open("data/color_sets.txt", "r+") as color_sets_file,
+            open("data/property_sets.txt", "r+") as property_sets_file,
         ):
-
             self.squares = eval(squares_file.read())
             self.com_chest = eval(com_chest_file.read())
             self.chance = eval(chance_file.read())
-            self.color_sets = eval(color_sets_file.read())
+            self.property_sets = eval(property_sets_file.read())
 
     @staticmethod
     def files_exist():
@@ -263,7 +299,7 @@ class Files:
             "data/squares.txt",
             "data/com_chest.txt",
             "data/chance.txt",
-            "data/color_sets.txt",
+            "data/property_sets.txt",
             "data/textopoly.py",
             "TextopolyAgain.py",
         ]
@@ -395,7 +431,7 @@ class Jail:
         player_cell = self.jailed_list[player.index]
 
         player_cell["jailed"] = False
-        player.normal_turn(*double_roll)
+        player.normal_turn(double_roll)
 
     def jail_options(self, player):
         player_cell = self.jailed_list[player.index]
@@ -449,41 +485,50 @@ class Player:
         self.index = index
         self.location = START_LOCATION
         self.balance = START_BALANCE
-        self.properties = []
+        self.properties = {"street": [], "railroad": [], "utility": []}
+        self.color_sets = []
         if START_PROPERTIES:
             self.starting_properties()
         self.doubles = START_DOUBLES
 
-    def normal_turn(self, roll_one=0, roll_two=0):
-        if (roll_one, roll_two) == (0, 0) and not SKIP_DICE:
-            input("\nRoll dice >")
-            roll_one, roll_two = (randint(1, 6), randint(1, 6))
-            print(f"1st: {roll_one}, 2nd: {roll_two} = " f"{roll_one + roll_two}")
-
-            self.doubles_count(roll_one, roll_two)
+    def normal_turn(self, dice_roll=(0, 0)):
+        self.turn_options(dice_roll)
+        dice_roll = self.roll_dice(dice_roll)
 
         input()
-        self.advance(roll_one + roll_two)
+        self.advance(sum(dice_roll))
         square = files.squares[self.location]
-        print(f"New square:\n{self.location} - " f"{square.name}")
+        print(f"New square:\n" f"{self.location} - " f"{square.name}")
 
-        if square.square_type == "utility":
-            square.landing(self, roll_one + roll_two)
-        else:
-            square.landing(self)
+        self.landing(square, dice_roll)
 
         input("\nEnd turn...")
 
-    def advance(self, moves):
-        new_location = self.location + moves
-        if new_location >= 40:
-            self.location = new_location % 40
-            print("You passed Go, receive $200")
-            self.balance += 200
-            return
-        self.location = new_location
+    def turn_options(self, dice_roll):
+        if self.properties:
+            print("(m) _M_ortgage")
+        if self.color_sets:
+            print("(h) Buy/sell _h_ouses")
+        print("([d]) Roll _d_ice")
 
-    def doubles_count(self, roll_one, roll_two):
+    def roll_dice(self, dice_roll):
+        if SKIP_DICE or dice_roll != (0, 0):
+            return dice_roll
+
+        input("\nRoll dice >")
+        dice_roll = (randint(1, 6), randint(1, 6))
+        print(f"1st: {dice_roll[0]}, 2nd: {dice_roll[1]}" f" = {sum(dice_roll)}")
+
+        self.doubles_roll(*dice_roll)
+        return dice_roll
+
+    def landing(self, square, dice_roll):
+        if square.square_type == "utility":
+            square.landing(self, sum(dice_roll))
+            return
+        square.landing(self)
+
+    def doubles_roll(self, roll_one, roll_two):
         if roll_one == roll_two and not DOUBLES_LOCK:
             print("Doubles!")
             self.doubles += 1
@@ -494,13 +539,25 @@ class Player:
             print("You rolled 3 consecutive doubles!")
             jail.jail_player(self)
 
+    def advance(self, moves):
+        new_location = self.location + moves
+        if new_location >= 40:
+            self.location = new_location % 40
+            print("You passed Go, receive $200")
+            self.balance += 200
+            return
+        self.location = new_location
+
     def starting_properties(self):
         player_properties = START_PROPERTIES[self.index]
-        self.properties = [
-            files.square_dto(files.squares[square]) for square in player_properties
-        ]
-        for player_property in self.properties:
-            player_property.owner = self.index
+        for property_type in player_properties:
+            properties = START_PROPERTIES[property_type]
+            for square in properties:
+                self.properties[property_type].append(files.square_dto(square))
+
+        for property_type in self.properties:
+            for player_property in self.properties[property_type]:
+                player_property.owner = self.index
 
 
 class PlayerData:

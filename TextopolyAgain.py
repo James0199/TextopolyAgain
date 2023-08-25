@@ -1,4 +1,4 @@
-from data.textopoly import *
+from modules.textopoly import *
 
 
 def main():
