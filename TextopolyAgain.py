@@ -1,9 +1,12 @@
-from modules.textopoly import *
+try:
+    from modules.textopoly import *
+except ModuleNotFoundError:
+    print("Please download all files.")
+    exit()
 
 
 def main():
     welcome()
-
     while True:
         player = player_data.player_list[player_data.player_index]
         square = files.squares[player.location]
@@ -20,5 +23,5 @@ def main():
         player_data.turn_advance(player)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" or not MODULE_GUARD:
     main()

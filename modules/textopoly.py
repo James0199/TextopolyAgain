@@ -1,14 +1,28 @@
-from os import path
-from random import randint
-from abc import ABC, abstractmethod
-from modules.config import *
+try:
+    from abc import ABC, abstractmethod
+    from random import randint
+    from modules.config import *
+except ModuleNotFoundError:
+    print("Please download all files.")
+    exit()
+except ImportError:
+    print(
+        "Couldn't load a module,\n"
+        "Make sure to use Python 3.10+\n\n"
+        "If the problem persists,\n"
+        "Submit an issue on this project's Github "
+    )
+    exit()
 
-if __name__ == "__main__":
+
+if __name__ == "__main__" and MODULE_GUARD:
     print(
         "Please run the TextopolyAgain.py file,\n"
         "This module is meant to be imported."
     )
     exit()
+
+print("Loading game...")
 
 
 class Square(ABC):
@@ -19,7 +33,7 @@ class Square(ABC):
 
 
 class Tax(Square):
-    def __init__(self, index, name, square_type, cost):
+    def __init__(self, index: int, name: str, square_type: str, cost: int):
         super().__init__(index, name, square_type)
         self.cost = cost
 
@@ -29,7 +43,7 @@ class Tax(Square):
 
 
 class Corner(Square):
-    def __init__(self, index, name, square_type):
+    def __init__(self, index: int, name: str, square_type: str):
         super().__init__(index, name, square_type)
 
     @staticmethod
@@ -42,7 +56,7 @@ class Corner(Square):
 
 
 class ComChest(Square):
-    def __init__(self, index, name, square_type):
+    def __init__(self, index: int, name: str, square_type: str):
         super().__init__(index, name, square_type)
 
     @staticmethod
@@ -63,7 +77,7 @@ class ComChest(Square):
 
 
 class Chance(Square):
-    def __init__(self, index, name, square_type):
+    def __init__(self, index: int, name: str, square_type: str):
         super().__init__(index, name, square_type)
 
     @staticmethod
@@ -107,7 +121,7 @@ class Ownable(Square, ABC):
 
     @abstractmethod
     def purchase(self, player):
-        pass
+        ...
 
 
 class Street(Ownable):
@@ -122,7 +136,7 @@ class Street(Ownable):
         color: str,
         improvement_level: int,
         improvement_cost: int,
-        rent_levels: dict,
+        rent_levels: dict[int, int],
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.color = color
@@ -132,7 +146,7 @@ class Street(Ownable):
 
     def purchase(self, player):
         option = input(
-            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
+            f"Would you like to purchase {self.name}\nfor ${self.cost}? (y/[n]):"
         )
         if option == "y" and player.balance - self.cost >= 0:
             player.balance -= self.cost
@@ -179,7 +193,7 @@ class Railroad(Ownable):
         cost: int,
         owner: None | int,
         mortgaged: bool,
-        rent_levels: dict,
+        rent_levels: dict[int, int],
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.rent_levels = rent_levels
@@ -228,11 +242,7 @@ class Utility(Ownable):
         mortgaged: bool,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
-        self.other_util = [
-            files.squares[util]
-            for util in files.property_sets["utility"]
-            if util != self.index
-        ][0]
+        self.other_util = None
 
     def purchase(self, player):
         option = input(
@@ -244,7 +254,15 @@ class Utility(Ownable):
             files.squares[player.location].owner = player.index
             print(f"You have bought {self.name} for ${self.cost}")
 
+    def define_other_util(self):
+        self.other_util = [
+            files.squares[util]
+            for util in files.property_sets["utility"]
+            if util != self.index
+        ][0]
+
     def landing(self, player, dice_roll):
+        self.define_other_util()
         if self.owner is None:
             self.purchase(player)
             return
@@ -263,14 +281,6 @@ class Utility(Ownable):
         owner_player.balance += dice_roll * multiplier
 
 
-class Card:
-    def __init__(self, name: str, card_type: str, value: None | int, chance: bool):
-        self.chance = chance
-        self.name = name
-        self.card_type = card_type
-        self.value = value
-
-
 class Files:
     def __init__(self):
         self.squares = {}
@@ -282,35 +292,24 @@ class Files:
     def load_files(self):
         if not LOAD_FILES:
             return
-        with (
-            open("data/squares.txt", "r+") as squares_file,
-            open("data/com_chest.txt", "r+") as com_chest_file,
-            open("data/chance.txt", "r+") as chance_file,
-            open("data/property_sets.txt", "r+") as property_sets_file,
-        ):
-            self.squares = eval(squares_file.read())
-            self.com_chest = eval(com_chest_file.read())
-            self.chance = eval(chance_file.read())
-            self.property_sets = eval(property_sets_file.read())
-
-    @staticmethod
-    def files_exist():
-        file_list = [
-            "data/squares.txt",
-            "data/com_chest.txt",
-            "data/chance.txt",
-            "data/property_sets.txt",
-            "data/textopoly.py",
-            "TextopolyAgain.py",
-        ]
-
-        for file in file_list:
-            if not path.isfile(file):
-                print(f'File "{file}" is missing\nPlease download all files')
+        try:
+            with (
+                open("data/squares.txt", "r+") as squares_file,
+                open("data/com_chest.txt", "r+") as com_chest_file,
+                open("data/chance.txt", "r+") as chance_file,
+                open("data/property_sets.txt", "r+") as property_sets_file,
+            ):
+                self.squares = eval(squares_file.read())
+                self.com_chest = eval(com_chest_file.read())
+                self.chance = eval(chance_file.read())
+                self.property_sets = eval(property_sets_file.read())
+        except FileNotFoundError:
+            if FILE_CHECK:
+                print("Please download all files")
                 exit()
 
     @staticmethod
-    def square_dto(square):
+    def square_dto(square) -> Square:
         square_type = square["type"]
         match square_type:
             case "street":
@@ -326,7 +325,6 @@ class Files:
                     square["IMPROVEMENT_COST"],
                     square["rent_levels"],
                 )
-                return square_obj
             case "railroad":
                 square_obj = Railroad(
                     square["index"],
@@ -337,7 +335,6 @@ class Files:
                     False,
                     square["rent_levels"],
                 )
-                return square_obj
             case "utility":
                 square_obj = Utility(
                     square["index"],
@@ -347,33 +344,34 @@ class Files:
                     None,
                     False,
                 )
-                return square_obj
             case "comChest":
                 square_obj = ComChest(
                     square["index"],
                     square["name"],
                     square_type,
                 )
-                return square_obj
             case "chance":
                 square_obj = Chance(
                     square["index"],
                     square["name"],
                     square_type,
                 )
-                return square_obj
             case "tax":
                 square_obj = Tax(
-                    square["index"], square["name"], square_type, square["cost"]
+                    square["index"],
+                    square["name"],
+                    square_type,
+                    square["cost"],
                 )
-                return square_obj
             case "corner":
                 square_obj = Corner(
                     square["index"],
                     square["name"],
                     square_type,
                 )
-                return square_obj
+            case _:
+                raise TypeError("Invalid square type")
+        return square_obj
 
     def dict_to_obj(self):
         new_squares = {}
@@ -385,19 +383,13 @@ class Files:
         self.squares = new_squares
 
     def file_setup(self):
-        print("\nLoading files...")
-
-        if FILE_CHECK:
-            self.files_exist()
         self.load_files()
         self.dict_to_obj()
-
-        print("Loaded successfully!")
 
 
 class Jail:
     def __init__(self):
-        self.jailed_list = {}
+        self.jailed_list: dict[int, dict[str, bool | int]] = {}
 
     def create_jail_space(self, player):
         self.jailed_list.update(
@@ -444,9 +436,6 @@ class Jail:
         print("([b]) Pay $50 _b_ail")
 
         option = input("Enter choice:")
-        self.jail_escape(option, player, player_cell)
-
-    def jail_escape(self, option, player, player_cell):
         if option == "r" and player_cell["jail_turns"] <= 3:
             input("\nRoll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
@@ -475,25 +464,29 @@ class Jail:
 
 files = Files()
 jail = Jail()
+print("Loaded successfully!")
 
 
 class Player:
     def __init__(
         self,
-        index: int,
+        index,
     ):
-        self.index = index
-        self.location = START_LOCATION
-        self.balance = START_BALANCE
-        self.properties = {"street": [], "railroad": [], "utility": []}
-        self.color_sets = []
+        self.index: int = index
+        self.location: int = START_LOCATION
+        self.balance: int = START_BALANCE
+        self.properties: dict[str, list[int]] = {
+            "street": [],
+            "railroad": [],
+            "utility": [],
+        }
+        self.color_sets: list[str] = []
+        self.doubles: int = START_DOUBLES
         if START_PROPERTIES:
-            self.starting_properties()
-        self.doubles = START_DOUBLES
+            self.properties = START_PROPERTIES[self.index]
 
     def normal_turn(self, dice_roll=(0, 0)):
-        self.turn_options(dice_roll)
-        dice_roll = self.roll_dice(dice_roll)
+        self.turn_options(dice_roll, True)
 
         input()
         self.advance(sum(dice_roll))
@@ -504,20 +497,41 @@ class Player:
 
         input("\nEnd turn...")
 
-    def turn_options(self, dice_roll):
-        if self.properties:
-            print("(m) _M_ortgage")
-        if self.color_sets:
-            print("(h) Buy/sell _h_ouses")
-        print("([d]) Roll _d_ice")
-
-    def roll_dice(self, dice_roll):
-        if SKIP_DICE or dice_roll != (0, 0):
+    def turn_options(self, dice_roll, turn_start):
+        if dice_roll != (0, 0):
             return dice_roll
+        while True:
+            print()
+            has_properties = all(
+                [bool(properties) for properties in self.properties.values()]
+            )
+            if has_properties:
+                print("(m) _M_ortgage\n" "(t) _T_rade")
+            if self.color_sets:
+                print("(h) Buy/sell _h_ouses")
+            if turn_start:
+                print("([d]) Roll _d_ice")
+            else:
+                print("([e]) _E_nd turn")
+
+            option = input("Enter option:")
+            if option == "m" and has_properties:
+                continue
+            elif option == "t" and has_properties:
+                continue
+            elif option == "h" and self.color_sets:
+                continue
+            if turn_start:
+                return self.roll_dice()
+            break
+
+    def roll_dice(self):
+        if SKIP_DICE:
+            return 0, 0
 
         input("\nRoll dice >")
         dice_roll = (randint(1, 6), randint(1, 6))
-        print(f"1st: {dice_roll[0]}, 2nd: {dice_roll[1]}" f" = {sum(dice_roll)}")
+        print(f"1st: {dice_roll[0]}, 2nd: {dice_roll[1]} = {sum(dice_roll)}")
 
         self.doubles_roll(*dice_roll)
         return dice_roll
@@ -547,17 +561,6 @@ class Player:
             self.balance += 200
             return
         self.location = new_location
-
-    def starting_properties(self):
-        player_properties = START_PROPERTIES[self.index]
-        for property_type in player_properties:
-            properties = START_PROPERTIES[property_type]
-            for square in properties:
-                self.properties[property_type].append(files.square_dto(square))
-
-        for property_type in self.properties:
-            for player_property in self.properties[property_type]:
-                player_property.owner = self.index
 
 
 class PlayerData:
@@ -622,18 +625,19 @@ player_data = PlayerData()
 
 
 def welcome():
-    input(
-        "\nWelcome to Textopoly!\n"
-        "\nNotes:"
-        "\n- Press enter (return) to advance prompts."
-        "\n- If you don't choose a valid option while in jail,"
-        "\n  You'll automatically pay $50 bail."
-    )
+    if not (WELCOME_MESSAGE or LOAD_FILES):
+        return
+    try:
+        with open("data/welcome.txt") as welcome_file:
+            print(welcome_file.read())
+            input()
+    except FileNotFoundError:
+        print("Could not find welcome.txt file")
 
 
 def print_stats(player, square):
     print(
-        f"\nPlayer {player.index + 1}'s turn"
+        f"\nPlayer {player.index+1}'s turn"
         f"\nCurrent balance: {player.balance}"
-        f"\nCurrent square:\n{player.location} - {square.name}"
+        f"\n{square.index} - {square.name}"
     )
