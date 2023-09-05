@@ -6,7 +6,6 @@ except ModuleNotFoundError:
 
 
 def main():
-    welcome()
     while True:
         player = player_data.player_list[player_data.player_index]
         square = files.squares[player.location]

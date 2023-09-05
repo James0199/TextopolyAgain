@@ -2,11 +2,7 @@ Welcome to Textopoly!
 
 Notes:
 - Press enter (return) to advance prompts.
-
-- If you don't choose a valid option:
-  - At the start of your (normal) turn:
-    - You'll roll the dice
-  - After rolling the dice:
-    - You'll end your turn
-  - While in jail:
-    - You'll pay $50 bail
+- Brackets when choosing options means it's the default choice
+  if you don't choose a valid option.
+- This project requires Python 3.10+
+  (match case, | union operator)
