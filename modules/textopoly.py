@@ -562,7 +562,9 @@ class Trade:
         match prompt:
             case "t":
                 print("You have these property types:")
-                if player.properties["street"]:
+                if player.properties["street"] and any(
+                    [street.improvement_level <= 0 for street in player.properties]
+                ):
                     print("(s) _S_treet")
                     options.append("s")
                 elif player.properties["railroad"]:
@@ -572,22 +574,24 @@ class Trade:
                     print("(u) _U_tility")
                 return options
             case "s":
-                print("You have these street(s):")
+                print("You have these applicable street(s):")
                 for i, street in enumerate(player.properties["street"]):
+                    if street.improvement_level > 0:
+                        continue
                     street: Street = files.squares[street]
                     print(f"{i+1}. {street.name}")
                 return range(0, len(player.properties["street"]))
             case "r":
-                print("You have these railroad(s):")
+                print("You have these applicable railroad(s):")
                 for i, railroad in enumerate(player.properties["railroad"]):
                     railroad: Railroad = files.squares[railroad]
                     print(f"{i+1}. {railroad.name}")
                 return range(0, len(player.properties["railroad"]))
             case "u":
                 if len(player.properties["utility"]) > 1:
-                    print("You have these utilities:")
+                    print("You have these applicable utilities:")
                 else:
-                    print("You have this utility:")
+                    print("You have this applicable utility:")
                 for i, util in enumerate(player.properties["utility"]):
                     util: Utility = files.squares[util]
                     print(f"{i+1}. {util.name}")
@@ -723,10 +727,20 @@ class Mortgage:
         print('\nType "m" to return to last menu\nYou currently have these properties:')
         for property_type in self.player.properties:
             if self.player.properties[property_type]:
+                if property_type == "street" and all(
+                    [
+                        street.improvement_level > 0
+                        for street in self.player.properties["street"]
+                    ]
+                ):
+                    continue
                 print(f"{property_type.capitalize()}:")
                 for i, owned_property in enumerate(
                     self.player.properties[property_type]
                 ):
+                    if type(owned_property) is Street:
+                        if owned_property.improvement_level > 0:
+                            continue
                     print(f"{i+1}. {files.squares[owned_property].name}")
 
     @staticmethod
