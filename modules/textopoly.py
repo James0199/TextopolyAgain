@@ -484,11 +484,65 @@ class Trade:
         self.sender = sender
         self.receiver = None
         self.status = None
+        self.accepted = [False, False]
+
         self.trade()
-        if self.status is False:
+        if self.status is None:
             print("Trade canceled")
+        elif self.status is True:
+            self.apply_trade(True)
+            self.apply_trade(False)
+            print("Trade successful")
 
     def trade(self):
+        self.determine_receiver()
+        sender_side = True
+        options = self.options(sender_side)
+        while True:
+            if sender_side:
+                print("Sender side")
+                offer = self.sender_offer
+                category = input("Add to sender offer:")
+            else:
+                print("Receiver side")
+                offer = self.receiver_offer
+                category = input("Add to receiver offer:")
+            if category in options:
+                category = category[0].casefold()
+
+            match category:
+                case "p":
+                    self.property_trade(sender_side)
+                case "m":
+                    self.money_trade(sender_side)
+                case "g":
+                    self.goojf_trade(sender_side)
+                case "c":
+                    return
+                case "a":
+                    self.review_trade(offer)
+                    confirm = input("Are you sure?(y/[n]):")
+                    try:
+                        if confirm[0].casefold() != "y":
+                            raise IndexError
+                    except IndexError:
+                        print("Trade not accepted.")
+                        continue
+                    if all(self.accepted):
+                        self.status = True
+                        return
+                    self.accepted[int(not sender_side)] = True
+                    sender_side = not sender_side
+                    options = self.options(sender_side)
+                case "t":
+                    sender_side = not sender_side
+                    options = self.options(sender_side)
+                    continue
+                case _:
+                    print("Invalid option")
+                    continue
+
+    def determine_receiver(self):
         while True:
             try:
                 self.receiver = (
@@ -501,47 +555,17 @@ class Trade:
                 ):
                     raise ValueError
                 self.receiver = player_data.player_list[self.receiver]
-                break
+                return
             except ValueError:
                 print("Invalid player")
                 continue
 
-        self_offer = True
-        options = self.options(self_offer)
-        while True:
-            # fmt: off
-            if self_offer:
-                category = input("What do you want to "
-                                 "add to your offer?:")
-            else:
-                category = input("What do you want to "
-                                 "add to their offer?:")
-            # fmt: on
-            if category in options:
-                category = category[0].casefold()
-
-            match category:
-                case "p":
-                    self.property_trade(self_offer)
-                case "m":
-                    self.money_trade(self_offer)
-                case "g":
-                    self.goojf_trade(self_offer)
-                case "c":
-                    self.status = False
-                    return
-                case "t":
-                    self_offer = not self_offer
-                    continue
-                case _:
-                    print("Invalid option")
-                    continue
-
-    def options(self, self_offer):
-        if self_offer:
+    def options(self, sender_side):
+        if sender_side:
             player = self.sender
         else:
             player = self.receiver
+
         options = []
         print("You currently have:")
         if player.properties:
@@ -553,7 +577,10 @@ class Trade:
         if jail.jailed_list[player.index]["goojf"]:
             print("(g) _G_et Out Of Jail Free cards")
             options.append("g")
-        print('Type "c" to cancel and "t" to switch trading sides')
+        print(
+            'Type "c" to cancel, "t" to switch trading sides,\n'
+            '"a" to accept/unaccept trade (Switches sides automatically)'
+        )
         return options
 
     @staticmethod
@@ -597,8 +624,8 @@ class Trade:
                     print(f"{i+1}. {util.name}")
                 return range(0, len(player.properties["utility"]))
 
-    def property_trade(self, self_offer):
-        if self_offer:
+    def property_trade(self, sender_side):
+        if sender_side:
             player = self.sender
             player_offer = self.sender_offer
         else:
@@ -644,8 +671,8 @@ class Trade:
                 print("Invalid option")
                 continue
 
-    def money_trade(self, self_offer):
-        if self_offer:
+    def money_trade(self, sender_side):
+        if sender_side:
             balance = self.sender.balance
         else:
             balance = self.receiver.balance
@@ -658,14 +685,14 @@ class Trade:
                 break
             except ValueError:
                 print("Invalid amount")
-        if self_offer:
+        if sender_side:
             self.sender_offer.update({"money": amount})
         else:
             self.receiver_offer.update({"money": amount})
         print(f"Money offer set to ${amount}")
 
-    def goojf_trade(self, self_offer):
-        if self_offer:
+    def goojf_trade(self, sender_side):
+        if sender_side:
             jail_cell = jail.jailed_list[self.sender.index]
         else:
             jail_cell = jail.jailed_list[self.receiver.index]
@@ -678,11 +705,35 @@ class Trade:
                 break
             except ValueError:
                 print("Invalid amount")
-        if self_offer:
+        if sender_side:
             self.sender_offer.update({"goojf": amount})
         else:
             self.receiver_offer.update({"goojf": amount})
         print(f"GOOJF cards offer set to {amount} card(s)")
+
+    @staticmethod
+    def review_trade(offer):
+        print("Here's an overview of the offer:")
+        for property_type in offer["property"]:
+            print(f"{property_type.capitalize()}:")
+            for property_offered in offer[property_type]:
+                print(f"- {files.squares[property_offered].name}")
+        print(f"Money: {offer['name']}\n" f"GOOJF cards: {offer['goojf']}")
+
+    def apply_trade(self, sender_side):
+        if sender_side:
+            main = self.sender
+            main_goojf = jail.jailed_list[self.sender.index]["goojf"]
+            other_offer = self.receiver_offer
+        else:
+            main = self.receiver
+            main_goojf = jail.jailed_list[self.receiver.index]["goojf"]
+            other_offer = self.sender_offer
+
+        for property_type in main.properties:
+            main.properties[property_type].extend(other_offer[property_type])
+        main.balance += self.receiver_offer["money"]
+        main_goojf += other_offer["goojf"]
 
 
 class Mortgage:
