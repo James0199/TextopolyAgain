@@ -1,9 +1,12 @@
 # Text-based Monopoly Again
 
 ### A Revision of my horribly written text-only monopoly clone in Python.
-
-Note: Hotels don't exist in this version of the game
+Note: Hotels don't exist in this version of the game  
 (I don't know why they're in the board game anyway)
+
+## Running the Game
+Python 3.10+ is required to run the game.  
+To run the game, download all files and run main.py
 
 ## Game modification
 
