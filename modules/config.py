@@ -30,7 +30,7 @@ START_PROPERTIES: dict[int, dict[str, list[int]]] = {}
 # {player.index: {"property_type": [property.index, ]}, }
 START_COLOR_SETS: dict[int, list[str]] = {}
 # {player.index: ["color_set", ], }
-# Mismatch with properties may cause unexpected behavior
+# Mismatched color sets with properties may cause unexpected behavior
 
 WELCOME_MESSAGE = False  # True
 FILE_CHECK = True  # True

@@ -14,7 +14,7 @@ def main():
         print_stats(player, square)
 
         if player_cell["jailed"]:
-            jail.jail_options(player)
+            jail.jail_turn(player)
         else:
             player.normal_turn()
 

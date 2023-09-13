@@ -417,7 +417,7 @@ class Jail:
         player_cell["jailed"] = False
         player.normal_turn(double_roll)
 
-    def jail_options(self, player):
+    def jail_turn(self, player):
         player_cell = self.jailed_list[player.index]
 
         print("You're in Jail\n")
@@ -560,7 +560,7 @@ class Trade:
                 print("Invalid player")
                 continue
 
-    def options(self, sender_side):
+    def options(self, sender_side) -> list[str]:
         if sender_side:
             player = self.sender
         else:
@@ -812,6 +812,112 @@ class Mortgage:
                 continue
 
 
+class HouseBuySell:
+    def __init__(self, player):
+        self.player = player
+        self.menu()
+
+    def options(self, no_print=False) -> tuple[dict, list] | dict:
+        applicable_streets = {"buy": [], "sell": []}
+        color_sets: dict[str, list[Street]] = {
+            color: [
+                files.squares[street] for street in files.property_sets["street"][color]
+            ]
+            for color in self.player.color_sets
+        }
+        for color in color_sets:
+            house_cap = max(
+                [street_.improvement_level for street_ in color_sets[color]]
+            )
+            for street in color_sets[color]:
+                if (
+                    street.improvement_level <= 0
+                    or street.improvement_level + 1 <= house_cap
+                ):
+                    applicable_streets["buy"].append(street)
+                    continue
+                elif (
+                    street.improvement_level >= 5
+                    or street.improvement_level > house_cap - 1
+                ):
+                    applicable_streets["sell"].append(street)
+                    continue
+        if no_print:
+            return applicable_streets
+
+        options = []
+        if applicable_streets["buy"]:
+            options.append("b")
+            print("You can buy houses on these streets:")
+            for street in applicable_streets["buy"]:
+                print(f"- {street.name}")
+        if applicable_streets["sell"]:
+            options.append("s")
+            print("You can sell houses on these streets:")
+            for street in applicable_streets["sell"]:
+                print(f"- {street.name}")
+        return applicable_streets, options
+
+    def menu(self):
+        applicable_streets, options = self.options()
+        print('Type "m" to return to last menu')
+        while True:
+            if applicable_streets["buy"]:
+                print("(b) _B_uy")
+            if applicable_streets["sell"]:
+                print("(s) _S_ell")
+            option = input("Enter option:")
+            if option:
+                option = option[0].casefold()
+            if option not in options:
+                print("Invalid option")
+                continue
+            match option:
+                case "b":
+                    self.house_action(applicable_streets, "buy")
+                    self.options(True)
+                case "s":
+                    self.house_action(applicable_streets, "sell")
+                    self.options(True)
+                case "m":
+                    return
+                case _:
+                    print("Invalid option")
+                    continue
+
+    def house_action(self, applicable_streets, action):
+        for i, street in enumerate(applicable_streets[action]):
+            print(f"{i+1}. {street.name}")
+        while True:
+            street_index = input("Select street:")
+            if street_index == "m":
+                break
+            try:
+                street_index = int(street_index) - 1
+                if street_index not in range(len(applicable_streets[action])):
+                    raise ValueError
+            except ValueError:
+                print("Invalid index")
+                continue
+        if street_index == "m":
+            return
+        selected_street: Street = applicable_streets[action][street_index]
+        if action == "buy":
+            selected_street.improvement_level += 1
+            self.player.balance -= selected_street.IMPROVEMENT_COST
+            print(
+                f"House bought on {selected_street.name} for "
+                f"${selected_street.IMPROVEMENT_COST}"
+            )
+        else:
+            selected_street.improvement_level -= 1
+            self.player.balance += selected_street.IMPROVEMENT_COST // 2
+            print(
+                f"House sold on {selected_street.name} for "
+                f"${selected_street.IMPROVEMENT_COST // 2}"
+            )
+
+
 def welcome():
     try:
         with open("data/welcome.txt") as welcome_file:
@@ -861,7 +967,7 @@ class Player:
             square.landing(self)
         self.turn_options(False)
 
-    def turn_options(self, turn_start, dice_roll=(0, 0)):
+    def turn_options(self, turn_start, dice_roll=(0, 0)) -> tuple[int, int]:
         if dice_roll != (0, 0):
             return dice_roll
         while True:
@@ -883,24 +989,23 @@ class Player:
                 print("[e] _E_nd turn")
 
             option = input("Enter option:")
+            if option:
+                option = option[0].casefold()
             if option not in options and turn_start:
                 return self.roll_dice()
-            if option in options:
-                option = option[0].casefold()
             match option:
                 case "m":
                     Mortgage(self)
                 case "t":
-                    trade = Trade(self)
-                    if trade.status is None:
-                        print("Trade unsuccessful")
+                    Trade(self)
                     continue
                 case "h":
+                    HouseBuySell(self)
                     continue
                 case _:
                     break
 
-    def roll_dice(self):
+    def roll_dice(self) -> tuple[int, int]:
         if SKIP_DICE:
             return 0, 0
 
