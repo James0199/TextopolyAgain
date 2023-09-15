@@ -38,6 +38,6 @@ LOAD_FILES = True  # True
 BANKRUPTCY_CHECK = True  # True
 SKIP_DICE = False  # False
 SKIP_JAIL = False  # False
-SINGLE_PLAYER = True  # False
+SINGLE_PLAYER = False  # False
 PLAYER_COUNT_OVERRIDE = 0  # 0
 # Numbers <=0 is disabling
