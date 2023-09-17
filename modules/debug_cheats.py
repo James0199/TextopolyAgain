@@ -20,7 +20,7 @@ BANKRUPTCY_CHECK = True  # True
 SKIP_DICE = False  # False
 SKIP_JAIL = False  # False
 SINGLE_PLAYER = False  # False
-PLAYER_COUNT_OVERRIDE = 2  # 0
+PLAYER_COUNT_OVERRIDE = 0  # 0
 # Numbers <=0 is disabling
 
 # Structure for START_OPTIONS:
@@ -31,7 +31,7 @@ START_BALANCE: dict[int, int] = {}
 START_DOUBLES: dict[int, int] = {}
 START_JAILED: dict[int, bool] = {}
 START_GOOJF: dict[int, int] = {}
-START_PROPERTIES: dict[int, dict[str, list[int]]] = {1: {"street": []}}
+START_PROPERTIES: dict[int, dict[str, list[int]]] = {}
 # {player.index: {"property_type": [property.index, ]}, }
 START_COLOR_SETS: dict[int, list[str]] = {}
 # {player.index: ["color_set", ], }
