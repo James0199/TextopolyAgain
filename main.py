@@ -2,7 +2,7 @@ try:
     from modules.textopoly import *
 except ModuleNotFoundError:
     print("Please download all files.")
-    exit()
+    raise SystemExit
 
 
 def main():
@@ -22,5 +22,5 @@ def main():
         player_data.turn_advance(player)
 
 
-if __name__ == "__main__" or not MODULE_GUARD:
+if __name__ == "__main__" and MODULE_GUARD:
     main()

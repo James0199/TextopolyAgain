@@ -1,10 +1,10 @@
 try:
     from abc import ABC, abstractmethod
     from random import randint
-    from modules.config import *
+    from modules.debug_cheats import *
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
-    exit()
+    raise SystemExit
 except ImportError:
     print(
         "Couldn't load a module,\n"
@@ -12,15 +12,12 @@ except ImportError:
         "If the problem persists,\n"
         "Submit an issue on this project's Github"
     )
-    exit()
+    raise SystemExit
 
 
 if __name__ == "__main__" and MODULE_GUARD:
-    print(
-        "Please run the TextopolyAgain.py file,\n"
-        "This module is meant to be imported."
-    )
-    exit()
+    print("Please run the main.py file,\n" "This module is meant to be imported.")
+    raise SystemExit
 
 print("Loading game...")
 
@@ -91,6 +88,10 @@ class Chance(Square):
                 if player.location > card["value"]:
                     print("You passed Go")
                     player.balance += 200
+
+                square = files.squares[player.location]
+                square.landing(player)
+
             case "balance":
                 player.balance += card["value"]
             case "move":
@@ -146,7 +147,7 @@ class Street(Ownable):
 
     def purchase(self, player):
         option = input(
-            f"Would you like to purchase {self.name}\nfor ${self.cost}? (y/[n]):"
+            f"\nWould you like to purchase {self.name}\nfor ${self.cost}? (y/[n]):"
         )
         if option == "y" and player.balance - self.cost >= 0:
             player.balance -= self.cost
@@ -200,7 +201,7 @@ class Railroad(Ownable):
 
     def purchase(self, player):
         option = input(
-            f"Would you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
+            f"\nWould you like to purchase {self.name}" f"\nfor ${self.cost}? (y/[n]):"
         )
         if option == "y" and player.balance - self.cost >= 0:
             player.balance -= self.cost
@@ -246,7 +247,7 @@ class Utility(Ownable):
 
     def purchase(self, player):
         option = input(
-            f"Would you like to purchase {self.name}\nfor ${self.cost}? (y/[n]):"
+            f"\nWould you like to purchase {self.name}\nfor ${self.cost}? (y/[n]):"
         )
         if option == "y" and player.balance - self.cost >= 0:
             player.balance -= self.cost
@@ -309,7 +310,7 @@ class Files:
         except FileNotFoundError:
             if FILE_CHECK:
                 print("Please download all files")
-                exit()
+                raise SystemExit
 
     @staticmethod
     def square_dto(square) -> Square:
@@ -466,7 +467,6 @@ class Jail:
 
 files = Files()
 jail = Jail()
-print("Loaded successfully!\n")
 
 
 class Trade:
@@ -481,17 +481,17 @@ class Trade:
             "money": 0,
             "goojf": 0,
         }
-        self.sender = sender
-        self.receiver = None
-        self.status = None
+        self.sender: Player = sender
+        self.receiver: None | Player = None
+        self.status: None | bool = None
         self.accepted = [False, False]
 
         self.trade()
         if self.status is None:
             print("Trade canceled")
         elif self.status is True:
-            self.apply_trade(True)
-            self.apply_trade(False)
+            self.apply_trade(self.sender, self.receiver, self.receiver_offer)
+            self.apply_trade(self.receiver, self.sender, self.sender_offer)
             print("Trade successful")
 
     def trade(self):
@@ -500,24 +500,22 @@ class Trade:
         options = self.options(sender_side)
         while True:
             if sender_side:
-                print("Sender side")
                 offer = self.sender_offer
-                category = input("Add to sender offer:")
+                category = input("\nAdd to sender offer:")
             else:
-                print("Receiver side")
                 offer = self.receiver_offer
-                category = input("Add to receiver offer:")
+                category = input("\nAdd to receiver offer:")
             if category in options:
                 category = category[0].casefold()
 
             match category:
                 case "p":
                     self.property_trade(sender_side)
-                case "m":
+                case "b":
                     self.money_trade(sender_side)
                 case "g":
                     self.goojf_trade(sender_side)
-                case "c":
+                case "m":
                     return
                 case "a":
                     self.review_trade(offer)
@@ -528,10 +526,11 @@ class Trade:
                     except IndexError:
                         print("Trade not accepted.")
                         continue
+                    self.accepted[int(not sender_side)] = True
                     if all(self.accepted):
                         self.status = True
                         return
-                    self.accepted[int(not sender_side)] = True
+
                     sender_side = not sender_side
                     options = self.options(sender_side)
                 case "t":
@@ -541,12 +540,13 @@ class Trade:
                 case _:
                     print("Invalid option")
                     continue
+            # </editor-fold>
 
     def determine_receiver(self):
         while True:
             try:
                 self.receiver = (
-                    int(input("\nWhich player do you want to trade with?:")) - 1
+                    int(input("\nPlayer (number) you want to trade with:")) - 1
                 )
                 if (
                     self.receiver not in player_data.player_list
@@ -565,32 +565,34 @@ class Trade:
             player = self.sender
         else:
             player = self.receiver
-
+        print(
+            '\nType "m" to return to last menu, "t" to switch trading sides,\n'
+            '"a" to accept/unaccept trade (Switches sides automatically)\n'
+        )
         options = []
-        print("You currently have:")
+        print("\nYou currently have:")
         if player.properties:
             print("(p) _P_roperties")
             options.append("p")
         if self.sender.balance > 0:
-            print("(m) _M_oney")
-            options.append("m")
+            print("(b) Money (_b_alance)")
+            options.append("b")
         if jail.jailed_list[player.index]["goojf"]:
             print("(g) _G_et Out Of Jail Free cards")
             options.append("g")
-        print(
-            'Type "c" to cancel, "t" to switch trading sides,\n'
-            '"a" to accept/unaccept trade (Switches sides automatically)'
-        )
         return options
 
     @staticmethod
-    def property_options(prompt, player) -> list | range:
+    def property_options(prompt, player) -> list | None:
         options = []
         match prompt:
             case "t":
-                print("You have these property types:")
-                if player.properties["street"] and any(
-                    [street.improvement_level <= 0 for street in player.properties]
+                print("\nYou have these property types:")
+                if any(
+                    [
+                        files.squares[street].improvement_level <= 0
+                        for street in player.properties["street"]
+                    ]
                 ):
                     print("(s) _S_treet")
                     options.append("s")
@@ -601,28 +603,25 @@ class Trade:
                     print("(u) _U_tility")
                 return options
             case "s":
-                print("You have these applicable street(s):")
+                print("\nYou have these applicable street(s):")
                 for i, street in enumerate(player.properties["street"]):
+                    street: Street = files.squares[street]
                     if street.improvement_level > 0:
                         continue
-                    street: Street = files.squares[street]
                     print(f"{i+1}. {street.name}")
-                return range(0, len(player.properties["street"]))
             case "r":
-                print("You have these applicable railroad(s):")
+                print("\nYou have these applicable railroad(s):")
                 for i, railroad in enumerate(player.properties["railroad"]):
                     railroad: Railroad = files.squares[railroad]
                     print(f"{i+1}. {railroad.name}")
-                return range(0, len(player.properties["railroad"]))
             case "u":
                 if len(player.properties["utility"]) > 1:
-                    print("You have these applicable utilities:")
+                    print("\nYou have these applicable utilities:")
                 else:
-                    print("You have this applicable utility:")
+                    print("\nYou have this applicable utility:")
                 for i, util in enumerate(player.properties["utility"]):
                     util: Utility = files.squares[util]
                     print(f"{i+1}. {util.name}")
-                return range(0, len(player.properties["utility"]))
 
     def property_trade(self, sender_side):
         if sender_side:
@@ -632,40 +631,35 @@ class Trade:
             player = self.receiver
             player_offer = self.receiver_offer
 
-        print('Type "m" to return to last _m_enu')
         while True:
             options = self.property_options("t", player)
-            option = input("Select type:")[0].casefold()
+            option = input("\nSelect type:")[0].casefold()
+            if option == "m":
+                break
             if option not in options:
                 print("Invalid type")
                 continue
-            options = self.property_options(option, player)
-            property_offer = player_offer["property"]
-            match option:
-                case "m":
-                    break
-                case "s":
-                    self.property_select(options, property_offer, "street")
-                case "r":
-                    self.property_select(options, property_offer, "railroad")
-                case "u":
-                    self.property_select(options, property_offer, "railroad")
+            self.property_options(option, player)
+            option = {"s": "street", "r": "railroad", "u": "utility"}[option]
+            self.property_select(player, player_offer, option)
 
     @staticmethod
-    def property_select(options, property_offer, property_type):
-        property_offer = property_offer[property_type]
+    def property_select(player, player_offer, property_type):
+        property_offer = player_offer["property"][property_type]
+        properties = player.properties[property_type]
         while True:
             try:
-                option = input(f"Select {property_type}:")
+                option = input(f"\nSelect {property_type}:")
                 if option == "m":
                     break
                 option = int(option) - 1
-                if option not in options:
+                if option not in range(len(properties)):
                     raise ValueError
                 if option in property_offer:
-                    property_offer.pop(option)
+                    property_offer.remove(properties[option])
                     print(f"{property_type.capitalize()} removed from offer")
-                property_offer.append(option)
+                    continue
+                property_offer.append(properties[option])
                 print(f"{property_type.capitalize()} added to offer")
             except ValueError:
                 print("Invalid option")
@@ -713,27 +707,40 @@ class Trade:
 
     @staticmethod
     def review_trade(offer):
-        print("Here's an overview of the offer:")
-        for property_type in offer["property"]:
+        print("\nHere's an overview of your offer:")
+        for property_type, properties in offer["property"].items():
+            if not properties:
+                continue
             print(f"{property_type.capitalize()}:")
-            for property_offered in offer[property_type]:
-                print(f"- {files.squares[property_offered].name}")
-        print(f"Money: {offer['name']}\n" f"GOOJF cards: {offer['goojf']}")
+            for offered_property in properties:
+                print(f"- {files.squares[offered_property].name}")
+        if offer["money"]:
+            print(f"Money: {offer['money']}")
+        if offer["goojf"]:
+            print(f"GOOJF cards: {offer['goojf']}")
 
-    def apply_trade(self, sender_side):
-        if sender_side:
-            main = self.sender
-            main_goojf = jail.jailed_list[self.sender.index]["goojf"]
-            other_offer = self.receiver_offer
-        else:
-            main = self.receiver
-            main_goojf = jail.jailed_list[self.receiver.index]["goojf"]
-            other_offer = self.sender_offer
+    @staticmethod
+    def apply_trade(player, other, other_offer):
+        player_goojf = jail.jailed_list[player.index]["goojf"]
+        other_goojf = jail.jailed_list[other.index]["goojf"]
 
-        for property_type in main.properties:
-            main.properties[property_type].extend(other_offer[property_type])
-        main.balance += self.receiver_offer["money"]
-        main_goojf += other_offer["goojf"]
+        for property_type in player.properties:
+            player.properties[property_type].extend(
+                other_offer["property"][property_type]
+            )
+            other.properties[property_type] = [
+                property_
+                for property_ in other.properties[property_type]
+                if property_ not in other_offer["property"][property_type]
+            ]
+            for property_ in other_offer["property"][property_type]:
+                property_: Ownable = files.squares[property_]
+                property_.owner = player.index
+
+        player.balance += other_offer["money"]
+        other.balance -= other_offer["money"]
+        player_goojf += other_offer["goojf"]
+        other_goojf -= other_offer["goojf"]
 
 
 class Mortgage:
@@ -765,6 +772,7 @@ class Mortgage:
                 property_obj.mortgaged = True
                 print(f"{selected_type.capitalize()} mortgaged.")
                 self.player.balance += property_obj.cost
+                print(self.player.balance, property_obj.cost)
             elif property_obj.mortgaged:
                 unmortgage_cost = round(property_obj.cost * 1.1)
                 if self.player.balance < unmortgage_cost:
@@ -775,12 +783,15 @@ class Mortgage:
                 self.player.balance -= round(property_obj.cost * 1.1)
 
     def print_options(self):
-        print('\nType "m" to return to last menu\nYou currently have these properties:')
+        print(
+            '\nType "m" to return to last menu\n'
+            "\nYou currently have these properties:"
+        )
         for property_type in self.player.properties:
             if self.player.properties[property_type]:
                 if property_type == "street" and all(
                     [
-                        street.improvement_level > 0
+                        files.squares[street].improvement_level > 0
                         for street in self.player.properties["street"]
                     ]
                 ):
@@ -803,7 +814,7 @@ class Mortgage:
                     option = option[0].casefold()
                     break
                 option = int(option) - 1
-                if option not in range(0, len(properties)):
+                if option not in range(len(properties)):
                     raise IndexError
                 return option
             except (ValueError, IndexError):
@@ -918,6 +929,9 @@ class HouseBuySell:
             )
 
 
+print("Loaded successfully!")
+
+
 def welcome():
     try:
         with open("data/welcome.txt") as welcome_file:
@@ -955,16 +969,16 @@ class Player:
 
     def normal_turn(self, dice_roll=(0, 0)):
         dice_roll = self.turn_options(True, dice_roll)
-
         input()
         self.advance(sum(dice_roll))
+
         square = files.squares[self.location]
         print(f"New square:\n" f"{self.location} - {square.name}")
-
         if square.square_type == "utility":
             square.landing(self, sum(dice_roll))
         else:
             square.landing(self)
+
         self.turn_options(False)
 
     def turn_options(self, turn_start, dice_roll=(0, 0)) -> tuple[int, int]:
@@ -972,13 +986,17 @@ class Player:
             return dice_roll
         while True:
             print()
-            has_properties = all(
-                [bool(properties) for properties in self.properties.values()]
+            has_properties = any(
+                [bool(property_type) for property_type in self.properties.values()]
             )
+            jail_cell = jail.jailed_list[self.index]
             options = []
+
             if has_properties:
-                print("(m) _M_ortgage\n(t) _T_rade")
+                print("(m) _M_ortgage")
                 options.append("m")
+            if self.balance or jail_cell["goojf"]:
+                print("(t) _T_rade")
                 options.append("t")
             if self.color_sets:
                 print("(h) Buy/sell _h_ouses")
@@ -996,12 +1014,11 @@ class Player:
             match option:
                 case "m":
                     Mortgage(self)
+                    print(self.balance)
                 case "t":
                     Trade(self)
-                    continue
                 case "h":
                     HouseBuySell(self)
-                    continue
                 case _:
                     break
 
@@ -1011,7 +1028,7 @@ class Player:
 
         input("\nRoll dice >")
         dice_roll = (randint(1, 6), randint(1, 6))
-        print(f"1st: {dice_roll[0]}, 2nd: {dice_roll[1]} = {sum(dice_roll)}")
+        print(f"1st: {dice_roll[0]} + 2nd: {dice_roll[1]} = {sum(dice_roll)}")
 
         self.doubles_roll(*dice_roll)
         return dice_roll
@@ -1070,7 +1087,7 @@ class PlayerData:
                 print("Try again")
                 continue
 
-        self.player_list = {count: Player(count) for count in range(0, player_count)}
+        self.player_list = {count: Player(count) for count in range(player_count)}
 
         for player in list(self.player_list.values()):
             jail.create_jail_space(player)
@@ -1085,17 +1102,17 @@ class PlayerData:
         if len(self.player_list) == 1 and not SINGLE_PLAYER:
             winning_player: Player = list(self.player_list.values())[0]
             print(f"Congrats! Player {winning_player.index} won the game!")
-            exit()
+            raise SystemExit
 
         if len(self.player_list) == 0:
             print("No one won the game!")
-            exit()
+            raise SystemExit
 
     def turn_advance(self, player: Player):
         player_cell = jail.jailed_list[player.index]
-        players = list(self.player_list.keys())
+        players = self.player_list.keys()
 
-        if 1 < player.doubles <= 3 and not player_cell["jailed"] or LOCATION_LOCK:
+        if player.doubles in range(1, 3) and not player_cell["jailed"]:
             return
         if self.player_index == max(players):
             self.player_index = min(players)
