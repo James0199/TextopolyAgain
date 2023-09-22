@@ -124,8 +124,27 @@ class Ownable(Square, ABC):
         self.owner = owner
         self.mortgaged = mortgaged
 
-    @abstractmethod
     def purchase(self, player):
+        if not NO_AUCTION_ONLY:
+            option = input(
+                f"\nWould you like to purchase {self.NAME}\nfor ${self.COST}? (y/[n]):"
+            )
+        else:
+            option = "n"
+
+        if option == "y" and player.balance - self.COST >= 0:
+            self.receive_property(player, self.COST)
+            print(f"You have bought {self.NAME} for ${self.COST}")
+        elif NO_AUCTION_ONLY is None or NO_AUCTION_ONLY:
+            print("\nAuction!")
+            status = auction(self)
+            if status is False:
+                return
+            player, bid = status
+            self.receive_property(player, bid)
+
+    @abstractmethod
+    def receive_property(self, player, cost):
         ...
 
 
@@ -149,16 +168,11 @@ class Street(Ownable):
         self.IMPROVEMENT_COST = improvement_cost
         self.RENT_LEVELS = rent_levels
 
-    def purchase(self, player):
-        option = input(
-            f"\nWould you like to purchase {self.NAME}\nfor ${self.COST}? (y/[n]):"
-        )
-        if option == "y" and player.balance - self.COST >= 0:
-            player.balance -= self.COST
-            player.properties["street"].append(self.INDEX)
-            self.update_color_set(player)
-            files.squares[player.location].owner = player.INDEX
-            print(f"You have bought {self.NAME} for ${self.COST}")
+    def receive_property(self, player, cost):
+        player.balance -= cost
+        player.properties["street"].append(self.INDEX)
+        self.update_color_set(player)
+        files.squares[player.location].owner = player.INDEX
 
     def update_color_set(self, player):
         color_set = files.PROPERTY_SETS["street"][self.COLOR]
@@ -166,7 +180,7 @@ class Street(Ownable):
 
         if all([street.owner == player.INDEX for street in color_set_squares]):
             player.color_sets.append(self.COLOR)
-            print(f"Player {player.INDEX} got the {self.COLOR} COLOR set!")
+            print(f"Player {player.INDEX} got the {self.COLOR} color set!")
 
     def landing(self, player):
         if self.owner is None:
@@ -182,7 +196,7 @@ class Street(Ownable):
         if self.improvement_level > 0:
             print(f"And this street has {self.improvement_level} houses\n")
         elif self.COLOR in player.color_sets and self.improvement_level == 0:
-            print("And also owns the COLOR set")
+            print("And also owns the color set")
             rent *= 2
         print(f"You'll pay ${rent} to player {owner_player.INDEX + 1}")
         player.balance -= rent
@@ -203,15 +217,10 @@ class Railroad(Ownable):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.RENT_LEVELS = rent_levels
 
-    def purchase(self, player):
-        option = input(
-            f"\nWould you like to purchase {self.NAME}" f"\nfor ${self.COST}? (y/[n]):"
-        )
-        if option == "y" and player.balance - self.COST >= 0:
-            player.balance -= self.COST
-            player.properties["railroad"].append(self.INDEX)
-            files.squares[player.location].owner = player.INDEX
-            print(f"You have bought {self.NAME} for ${self.COST}")
+    def receive_property(self, player, cost):
+        player.balance -= cost
+        player.properties["railroad"].append(self.INDEX)
+        files.squares[player.location].owner = player.INDEX
 
     def landing(self, player):
         if self.owner is None:
@@ -249,15 +258,10 @@ class Utility(Ownable):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.OTHER_UTIL = None
 
-    def purchase(self, player):
-        option = input(
-            f"\nWould you like to purchase {self.NAME}\nfor ${self.COST}? (y/[n]):"
-        )
-        if option == "y" and player.balance - self.COST >= 0:
-            player.balance -= self.COST
-            player.properties["utility"].append(self.INDEX)
-            files.squares[player.location].owner = player.INDEX
-            print(f"You have bought {self.NAME} for ${self.COST}")
+    def receive_property(self, player, cost):
+        player.balance -= cost
+        player.properties["utility"].append(self.INDEX)
+        files.squares[player.location].owner = player.INDEX
 
     def define_other_util(self):
         self.OTHER_UTIL = [
@@ -1131,6 +1135,52 @@ class PlayerData:
 
 
 player_data = PlayerData()
+
+
+def auction(square: Ownable) -> False | tuple[Player, int]:
+    print(
+        "\nInput format: (player number), (amount of money)"
+        '\nExample: 1, 200; Enter "end" to end auction\n'
+    )
+    if square.COST % 20 != 0:
+        start_bid = 25
+    else:
+        start_bid = 20
+    player_high, highest_bid = -1, start_bid
+    print(f"Starting bid: ${start_bid}")
+    while True:
+        try:
+            option = input("Enter bid: ")
+            if option == "end":
+                break
+            option = option.split(", ")
+            player: Player = player_data.player_list[int(option[0]) - 1]
+            player_bid = int(option[1])
+
+            if player.balance < player_bid:
+                print("Not enough balance\n")
+                continue
+            if player_bid < highest_bid + start_bid:
+                print(f"Must be higher than highest bid by at least ${start_bid}\n")
+                continue
+
+            player_high = player
+            highest_bid = player_bid
+            print(f"New bid: {highest_bid} by player {player_high.INDEX+1}")
+
+        except ValueError:
+            print("Invalid input\n")
+            continue
+        except IndexError:
+            print("Invalid player\n")
+            continue
+
+    if (player_high, highest_bid) == (-1, start_bid):
+        print("No one got the property")
+        return False
+
+    print(f"Player {player_high.INDEX+1} got the property!")
+    return player_high, highest_bid
 
 
 def print_stats(player, square):
