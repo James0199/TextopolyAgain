@@ -9,7 +9,7 @@ def main():
     while True:
         player = player_data.player_list[player_data.player_index]
         square = files.squares[player.location]
-        player_cell = jail.jailed_list[player.index]
+        player_cell = jail.jailed_list[player.INDEX]
 
         print_stats(player, square)
 
