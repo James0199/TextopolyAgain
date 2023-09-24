@@ -3,6 +3,7 @@ try:
     from random import randint
     from modules.debug_cheats import *
     from modules.house_rules import *
+    from modules import stats
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
     raise SystemExit
@@ -29,6 +30,9 @@ class Square(ABC):
         self.NAME = name
         self.SQUARE_TYPE = square_type
 
+    def __repr__(self):
+        return str(vars(self))
+
 
 class Tax(Square):
     def __init__(self, index: int, name: str, square_type: str, cost: int):
@@ -46,9 +50,7 @@ class Corner(Square):
 
     @staticmethod
     def landing(player):
-        if SKIP_JAIL:
-            return
-        if player.location == 30:
+        if player.location == 30 and not SKIP_JAIL:
             print("You landed on Go To Jail!")
             jail.jail_player(player)
 
@@ -301,6 +303,9 @@ class Files:
             for index, square in list(self.squares.items())
         }
 
+    def __repr__(self):
+        return str(vars(self))
+
     def load_files(self):
         if not LOAD_FILES:
             return
@@ -388,6 +393,9 @@ class Files:
 class Jail:
     def __init__(self):
         self.jailed_list: dict[int, dict[str, bool | int]] = {}
+
+    def __repr__(self):
+        return str(vars(self))
 
     def create_jail_space(self, player):
         self.jailed_list.update(
@@ -501,6 +509,9 @@ class Trade:
             self.apply_trade(self.receiver, self.sender, self.sender_offer)
             print("Trade successful")
 
+    def __repr__(self):
+        return str(vars(self))
+
     def trade(self):
         self.determine_receiver()
         sender_side = True
@@ -553,7 +564,7 @@ class Trade:
         while True:
             try:
                 self.receiver = (
-                    int(input("\nPlayer (number) you want to trade with:")) - 1
+                    int(input("\nPlayer (index) you want to trade with:")) - 1
                 )
                 if (
                     self.receiver not in player_data.player_list
@@ -755,6 +766,9 @@ class Mortgage:
         self.player = player
         self.mortgage()
 
+    def __repr__(self):
+        return str(vars(self))
+
     def mortgage(self):
         self.print_options()
         while True:
@@ -834,6 +848,9 @@ class HouseBuySell:
     def __init__(self, player):
         self.player = player
         self.menu()
+
+    def __repr__(self):
+        return str(vars(self))
 
     def options(self, no_print=False) -> tuple[dict, list] | dict:
         applicable_streets = {"buy": [], "sell": []}
@@ -969,6 +986,9 @@ class Player:
         if START_ENABLED:
             self.start_options()
 
+    def __repr__(self):
+        return str(vars(self))
+
     def normal_turn(self, dice_roll=(0, 0)):
         dice_roll = self.turn_options(True, dice_roll)
         input()
@@ -992,7 +1012,7 @@ class Player:
                 [bool(property_type) for property_type in self.properties.values()]
             )
             jail_cell = jail.jailed_list[self.INDEX]
-            options = []
+            options = ["v"]
 
             if has_properties:
                 print("(m) _M_ortgage")
@@ -1003,6 +1023,7 @@ class Player:
             if self.color_sets:
                 print("(h) Buy/sell _h_ouses")
                 options.append("h")
+            print("(v) _V_iew stats")
             if turn_start:
                 print("[d] Roll _d_ice")
             else:
@@ -1021,6 +1042,8 @@ class Player:
                     Trade(self)
                 case "h":
                     HouseBuySell(self)
+                case "v":
+                    stats.stat_options(self, player_data, files.squares)
                 case _:
                     break
 
@@ -1086,6 +1109,9 @@ class PlayerData:
 
         self.player_setup()
 
+    def __repr__(self):
+        return str(vars(self))
+
     def player_setup(self):
         player_count = 1
         if PLAYER_COUNT_OVERRIDE > 0:
@@ -1137,9 +1163,9 @@ class PlayerData:
 player_data = PlayerData()
 
 
-def auction(square: Ownable) -> False | tuple[Player, int]:
+def auction(square: Ownable) -> bool | tuple[Player, int]:
     print(
-        "\nInput format: (player number), (amount of money)"
+        "Input format: (player index), (amount of money)"
         '\nExample: 1, 200; Enter "end" to end auction\n'
     )
     if square.COST % 20 != 0:
@@ -1166,7 +1192,7 @@ def auction(square: Ownable) -> False | tuple[Player, int]:
 
             player_high = player
             highest_bid = player_bid
-            print(f"New bid: {highest_bid} by player {player_high.INDEX+1}")
+            print(f"New bid: ${highest_bid} by player {player_high.INDEX+1}")
 
         except ValueError:
             print("Invalid input\n")
@@ -1181,11 +1207,3 @@ def auction(square: Ownable) -> False | tuple[Player, int]:
 
     print(f"Player {player_high.INDEX+1} got the property!")
     return player_high, highest_bid
-
-
-def print_stats(player, square):
-    print(
-        f"\nPlayer {player.INDEX + 1}'s turn"
-        f"\nCurrent balance: {player.balance}"
-        f"\n{square.INDEX} - {square.NAME}"
-    )

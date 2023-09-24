@@ -1,5 +1,6 @@
 try:
     from modules.textopoly import *
+    from modules import stats
 except ModuleNotFoundError:
     print("Please download all files.")
     raise SystemExit
@@ -11,8 +12,7 @@ def main():
         square = files.squares[player.location]
         player_cell = jail.jailed_list[player.INDEX]
 
-        print_stats(player, square)
-
+        stats.main_stats(player, square)
         if player_cell["jailed"]:
             jail.jail_turn(player)
         else:
@@ -22,5 +22,5 @@ def main():
         player_data.turn_advance(player)
 
 
-if __name__ == "__main__" and MODULE_GUARD:
+if __name__ == "__main__":
     main()

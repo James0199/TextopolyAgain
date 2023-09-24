@@ -4,6 +4,5 @@ Welcome to Textopoly!
 Notes:
 - Press enter (return) to advance prompts.
 - Brackets when choosing options means it's the default choice
-  if you don't choose a valid option.
 - This project requires Python 3.10+
   (match case, | union operator)
