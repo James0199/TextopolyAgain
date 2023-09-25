@@ -7,14 +7,21 @@ Note: Hotels don't exist in this version of the game
 
 ## Running the Game
 
-Python 3.10+ is required to run the game.  
-To run the game, download all files and run main.py
+Python 3.10+ is required to run the game.
+
+1. Download the zip file and extract it
+2. Open ```cmd``` or terminal and navigate to the project's src folder with ```cd```  
+   (e.g. ```cd Donwloads/TextopolyAgain/src```)
+3. Run the main.py file with the appropiate command:  
+   Windows: ```python main.py```  
+   Linux/macOS: ```python3 main.py```
 
 ## Game modification
 
-modules/debug_cheats.py was originally meant for debugging,  
-but it can be modified to change some parts of the game.  
-In the future, modules/house_rules.py will be added to make game modification easier.
+These files can be edited to modify the game,  
+They're located in the ```src/options``` folder:  
+```debug_cheats.py```: Debugging and cheats
+```house_rules.py```: Common house rules
 
 ## Fun Fact
 

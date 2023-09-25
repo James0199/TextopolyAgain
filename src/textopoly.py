@@ -1,16 +1,15 @@
 try:
     from abc import ABC, abstractmethod
     from random import randint
-    from modules.debug_cheats import *
-    from modules.house_rules import *
-    from modules import stats
+    from options.debug_cheats import *
+    from options.house_rules import *
+    from utils import stats
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
     raise SystemExit
 except ImportError:
     print(
         "Couldn't load a module,\n"
-        "Make sure to use Python 3.10+\n\n"
         "If the problem persists,\n"
         "Submit an issue on this project's Github"
     )
@@ -956,18 +955,6 @@ class HouseBuySell:
 print("Loaded successfully!")
 
 
-def welcome():
-    try:
-        with open("data/welcome.txt") as welcome_file:
-            input(welcome_file.read())
-    except FileNotFoundError:
-        print("Could not find welcome.txt file")
-
-
-if WELCOME_MESSAGE and LOAD_FILES:
-    welcome()
-
-
 class Player:
     def __init__(self, index):
         self.INDEX: int = index
@@ -1107,8 +1094,6 @@ class PlayerData:
         self.player_index = 0
         self.player_list = {}
 
-        self.player_setup()
-
     def __repr__(self):
         return str(vars(self))
 
@@ -1161,6 +1146,14 @@ class PlayerData:
 
 
 player_data = PlayerData()
+
+
+def welcome():
+    try:
+        with open("data/welcome.txt") as welcome_file:
+            input(welcome_file.read())
+    except FileNotFoundError:
+        print("Could not find welcome.txt file")
 
 
 def auction(square: Ownable) -> bool | tuple[Player, int]:

@@ -1,8 +1,7 @@
 try:
-    from modules.textopoly import *
-    from modules import stats
-except ModuleNotFoundError:
-    print("Please download all files.")
+    from textopoly import *
+except ImportError:
+    print("\nPlease download all files and use Python 3.10+\n")
     raise SystemExit
 
 
@@ -23,4 +22,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        if WELCOME_MESSAGE and LOAD_FILES:
+            welcome()
+        player_data.player_setup()
+        main()
+    except KeyboardInterrupt:
+        print("\nKeyboardInterrupt")
+        raise SystemExit
