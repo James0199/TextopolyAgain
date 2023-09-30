@@ -28,5 +28,5 @@ if __name__ == "__main__":
         player_data.player_setup()
         main()
     except KeyboardInterrupt:
-        print("\nKeyboardInterrupt")
+        print("\nGame Exited.")
         raise SystemExit

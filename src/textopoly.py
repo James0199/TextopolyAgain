@@ -3,7 +3,7 @@ try:
     from random import randint
     from options.debug_cheats import *
     from options.house_rules import *
-    from utils import stats
+    from utils import files, jail, stats
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
     raise SystemExit
@@ -156,12 +156,12 @@ class Street(Ownable):
         name: str,
         square_type: str,
         cost: int,
-        owner: None | int,
-        mortgaged: bool,
         color: str,
-        improvement_level: int,
         improvement_cost: int,
         rent_levels: dict[int, int],
+        owner: None | int,
+        mortgaged: bool,
+        improvement_level: int,
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.COLOR = color
@@ -211,9 +211,9 @@ class Railroad(Ownable):
         name: str,
         square_type: str,
         cost: int,
+        rent_levels: dict[int, int],
         owner: None | int,
         mortgaged: bool,
-        rent_levels: dict[int, int],
     ):
         super().__init__(index, name, square_type, cost, owner, mortgaged)
         self.RENT_LEVELS = rent_levels
@@ -291,196 +291,32 @@ class Utility(Ownable):
         owner_player.balance += dice_roll * multiplier
 
 
-class Files:
-    def __init__(self):
-        self.COM_CHEST = {}
-        self.CHANCE = {}
-        self.PROPERTY_SETS = {}
-        self.load_files()
-        self.squares = {
-            index: self.square_dto(square)
-            for index, square in list(self.squares.items())
-        }
-
-    def __repr__(self):
-        return str(vars(self))
-
-    def load_files(self):
-        if not LOAD_FILES:
-            return
-        try:
-            with (
-                open("data/squares.txt", "r+") as squares_file,
-                open("data/COM_CHEST.txt", "r+") as com_chest_file,
-                open("data/CHANCE.txt", "r+") as chance_file,
-                open("data/PROPERTY_SETS.txt", "r+") as property_sets_file,
-            ):
-                self.squares = eval(squares_file.read())
-                self.COM_CHEST = eval(com_chest_file.read())
-                self.CHANCE = eval(chance_file.read())
-                self.PROPERTY_SETS = eval(property_sets_file.read())
-        except FileNotFoundError:
-            if FILE_CHECK:
-                print("Please download all files")
-                raise SystemExit
-
-    @staticmethod
-    def square_dto(square) -> Square:
-        match square["TYPE"]:
-            case "street":
-                square_obj = Street(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                    square["COST"],
-                    None,
-                    False,
-                    square["COLOR"],
-                    0,
-                    square["IMPROVEMENT_COST"],
-                    square["RENT_LEVELS"],
-                )
-            case "railroad":
-                square_obj = Railroad(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                    square["COST"],
-                    None,
-                    False,
-                    square["RENT_LEVELS"],
-                )
-            case "utility":
-                square_obj = Utility(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                    square["COST"],
-                    None,
-                    False,
-                )
-            case "com_chest":
-                square_obj = ComChest(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                )
-            case "chance":
-                square_obj = Chance(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                )
-            case "tax":
-                square_obj = Tax(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                    square["COST"],
-                )
-            case "corner":
-                square_obj = Corner(
-                    square["INDEX"],
-                    square["NAME"],
-                    square["TYPE"],
-                )
-            case _:
-                raise TypeError("Invalid square type")
-        return square_obj
+def square_dto(square: dict[str, str | int | None | bool | dict]) -> Square:
+    square_args = [arg for arg in square.values()]
+    match square["TYPE"]:
+        case "street":
+            square_args.extend((None, False, 0))
+            square_obj = Street(*square_args)
+        case "railroad":
+            square_args.extend((None, False))
+            square_obj = Railroad(*square_args)
+        case "utility":
+            square_args.extend((None, False))
+            square_obj = Utility(*square_args)
+        case "com_chest":
+            square_obj = ComChest(*square_args)
+        case "chance":
+            square_obj = Chance(*square_args)
+        case "tax":
+            square_obj = Tax(*square_args)
+        case "corner":
+            square_obj = Corner(*square_args)
+        case _:
+            raise TypeError("Invalid square type")
+    return square_obj
 
 
-class Jail:
-    def __init__(self):
-        self.jailed_list: dict[int, dict[str, bool | int]] = {}
-
-    def __repr__(self):
-        return str(vars(self))
-
-    def create_jail_space(self, player):
-        self.jailed_list.update(
-            {
-                player.INDEX: {
-                    "jailed": False,
-                    "goojf": 0,
-                    "jail_turns": 0,
-                }
-            }
-        )
-        if any((START_JAILED, START_GOOJF)):
-            self.start_options(player)
-
-    def jail_player(self, player):
-        player_cell = self.jailed_list[player.INDEX]
-
-        player_cell["jailed"] = True
-        player.location = 10
-        print("You have been sent to Jail")
-
-    def goojf_card(self, player, amount):
-        player_cell = self.jailed_list[player.INDEX]
-
-        if amount > 0:
-            print(f"You've recieved {amount} goojf card(s)")
-        elif amount < 0:
-            print(f"You've lost/used {abs(amount)} goojf card(s)")
-
-        player_cell["goojf"] += amount
-
-    def get_out_of_jail(self, player, double_roll=(0, 0)):
-        player_cell = self.jailed_list[player.INDEX]
-
-        player_cell["jailed"] = False
-        player.normal_turn(double_roll)
-
-    def jail_turn(self, player):
-        player_cell = self.jailed_list[player.INDEX]
-
-        print("You're in Jail\n")
-        options = []
-        if player_cell["jail_turns"] <= 3:
-            print("(r) _R_oll doubles")
-            options.append("r")
-        if player_cell["goojf"] > 0:
-            print("(f) Use Get Out Of Jail _F_ree card")
-            options.append("f")
-        print("[b] Pay $50 _b_ail")
-
-        option = input("Enter choice:")
-        if option in options:
-            option = option[0].casefold()
-        match option:
-            case "r":
-                input("\nRoll dice >")
-                roll_one, roll_two = (randint(1, 6), randint(1, 6))
-                print(f"1st: {roll_one} + 2nd: {roll_two} = {roll_one + roll_two}")
-                if roll_one == roll_two:
-                    print("You rolled a double!\nYou've been released")
-                    self.get_out_of_jail(player, (roll_one, roll_two))
-                    return
-                print("You didn't roll a double\nYou'll remain in Jail")
-                player_cell["jail_turns"] += 1
-                return
-            case "f":
-                print("You've used your Get Out Of Jail Free Card")
-                self.goojf_card(player, -1)
-                self.get_out_of_jail(player)
-                return
-            case _:
-                player.balance -= 50
-                print("You've paid $50 bail to get out of jail")
-                self.get_out_of_jail(player)
-                return
-
-    def start_options(self, player):
-        player_cell = self.jailed_list[player.INDEX]
-        if player.INDEX in START_JAILED:
-            player_cell["jailed"] = START_JAILED[player.INDEX]
-        if player.INDEX in START_GOOJF:
-            player_cell["goojf"] = START_GOOJF[player.INDEX]
-
-
-files = Files()
-jail = Jail()
+files.dict_to_obj(square_dto)
 
 
 class Trade:
@@ -1093,9 +929,6 @@ class PlayerData:
     def __init__(self):
         self.player_index = 0
         self.player_list = {}
-
-    def __repr__(self):
-        return str(vars(self))
 
     def player_setup(self):
         player_count = 1

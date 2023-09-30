@@ -20,6 +20,7 @@ SINGLE_PLAYER = False  # False
 PLAYER_COUNT_OVERRIDE = 0  # 0
 # Numbers <=0 is disabling
 
+
 # Structure for START_OPTIONS:
 # {player.INDEX: Value, }  # {}
 
