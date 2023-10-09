@@ -3,16 +3,9 @@ try:
     from random import randint
     from options.debug_cheats import *
     from options.house_rules import *
-    from utils import files, jail, stats, mortgage, houses, trade
+    from utils import files, jail, stats, mortgage, houses, trade, misc
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
-    raise SystemExit
-except ImportError:
-    print(
-        "Couldn't load a module,\n"
-        "If the problem persists,\n"
-        "Submit an issue on this project's Github"
-    )
     raise SystemExit
 
 
@@ -52,6 +45,12 @@ class Corner(Square):
         if player.location == 30 and not SKIP_JAIL:
             print("You landed on Go To Jail!")
             jail.jail_player(player)
+        elif player.location == 20 and PARKING_BONUS_SKIP_SPACES is False:
+            if type(PARKING_BONUS) is not int:
+                return
+            amount = abs(PARKING_BONUS)
+            player.balance += amount
+            print(f"You got the free parking bonus of ${amount}")
 
 
 class ComChest(Square):
@@ -138,7 +137,7 @@ class Ownable(Square, ABC):
             print(f"You have bought {self.NAME} for ${self.COST}")
         elif NO_AUCTION_ONLY is None or NO_AUCTION_ONLY:
             print("\nAuction!")
-            status = auction(self)
+            status = misc.auction(self, player_data.player_list)
             if status is False:
                 return
             player, bid = status
@@ -193,6 +192,10 @@ class Street(Ownable):
         if owner_player is player:
             return
 
+        if jail.jailed_list[owner_player.INDEX]["jailed"] and NO_JAIL_RENT:
+            print("This street's owner is in jail, no rent will be collected")
+            return
+
         rent = self.RENT_LEVELS[self.improvement_level]
         if self.improvement_level > 0:
             print(f"And this street has {self.improvement_level} houses\n")
@@ -229,6 +232,10 @@ class Railroad(Ownable):
             return
 
         owner_player = player_data.player_list[self.owner]
+        if jail.jailed_list[owner_player.INDEX]["jailed"] and NO_JAIL_RENT:
+            print("This railroad's owner is in jail, no rent will be collected")
+            return
+
         owned_railroads = len(
             [
                 railroad
@@ -278,6 +285,10 @@ class Utility(Ownable):
             return
 
         owner_player: Player = player_data.player_list[self.owner]
+        if jail.jailed_list[owner_player.INDEX]["jailed"] and NO_JAIL_RENT:
+            print("This utility's owner is in jail, no rent will be collected")
+            return
+
         print(f"Player {self.owner + 1} owns this utility,")
         multiplier = 4
         if self.owner == self.OTHER_UTIL.owner:
@@ -292,7 +303,7 @@ class Utility(Ownable):
 
 
 def square_dto(square: dict[str, str | int | None | bool | dict]) -> Square:
-    square_args = [arg for arg in square.values()]
+    square_args = list(square.values())
     match square["TYPE"]:
         case "street":
             square_args.extend((None, False, 0))
@@ -317,8 +328,6 @@ def square_dto(square: dict[str, str | int | None | bool | dict]) -> Square:
 
 
 files.dict_to_obj(square_dto)
-
-
 print("Loaded successfully!")
 
 
@@ -328,12 +337,12 @@ class Player:
         self.location: int = 0
         self.balance: int = 1500
         self.doubles: int = 0
+        self.color_sets: list[str] = []
         self.properties: dict[str, list[int]] = {
             "street": [],
             "railroad": [],
             "utility": [],
         }
-        self.color_sets: list[str] = []
         START_ENABLED = any(
             (START_BALANCE, START_LOCATION, START_DOUBLES, START_PROPERTIES)
         )
@@ -362,9 +371,7 @@ class Player:
             return dice_roll
         while True:
             print()
-            has_properties = any(
-                [bool(property_type) for property_type in self.properties.values()]
-            )
+            has_properties = any(self.properties.values())
             jail_cell = jail.jailed_list[self.INDEX]
             options = ["v"]
 
@@ -398,7 +405,7 @@ class Player:
                 case "h":
                     houses.exchange(self, files)
                 case "v":
-                    stats.stat_options(self, player_data, files.squares)
+                    stats.stat_options(self, player_data.player_list, files.squares)
                 case _:
                     break
 
@@ -408,6 +415,12 @@ class Player:
 
         input("\nRoll dice >")
         dice_roll = (randint(1, 6), randint(1, 6))
+        while (
+            PARKING_BONUS_SKIP_SPACES is True
+            and (sum(dice_roll) + self.location) % files.BOARD_LENGTH
+            in files.PROPERTY_SETS["skip"]
+        ):
+            dice_roll = (randint(1, 6), randint(1, 6))
         print(f"1st: {dice_roll[0]} + 2nd: {dice_roll[1]} = {sum(dice_roll)}")
 
         self.doubles_roll(*dice_roll)
@@ -426,13 +439,13 @@ class Player:
 
     def advance(self, moves):
         new_location = self.location + moves
-        if new_location == 40 and GO_BONUS:
+        if new_location == files.BOARD_LENGTH and GO_BONUS:
             self.location = 0
             print("You landed directly on Go, receive $400")
             self.balance += 400
             return
-        elif new_location >= 40:
-            self.location = new_location % 40
+        elif new_location >= files.BOARD_LENGTH:
+            self.location = new_location % files.BOARD_LENGTH
             print("You passed Go, receive $200")
             self.balance += 200
             return
@@ -466,11 +479,19 @@ class PlayerData:
         player_count = 1
         if PLAYER_COUNT_OVERRIDE > 0:
             player_count = PLAYER_COUNT_OVERRIDE
+
         while not (SINGLE_PLAYER or PLAYER_COUNT_OVERRIDE):
             try:
-                player_count = int(input("\nHow many players?(2-8):"))
+                player_count = input("\nHow many players?([2]-8):")
+
+                if not player_count.isnumeric():
+                    player_count = 2
+                    break
+
+                player_count = int(player_count)
                 if not (player_count in range(2, 8 + 1)):
                     raise ValueError
+
                 break
             except ValueError:
                 print("Try again")
@@ -487,10 +508,16 @@ class PlayerData:
 
         if player.balance < 0:
             self.player_list.pop(player.INDEX)
+            if QUICK_END:
+                print(
+                    f"Player {player.INDEX+1} lost!\n"
+                    f"Players {', '.join(self.player_list.keys())}"
+                )
+                raise SystemExit
 
         if len(self.player_list) == 1 and not SINGLE_PLAYER:
             winning_player: Player = list(self.player_list.values())[0]
-            print(f"Congrats! Player {winning_player.INDEX} won the game!")
+            print(f"Congrats! Player {winning_player.INDEX+1} won the game!")
             raise SystemExit
 
         if len(self.player_list) == 0:
@@ -511,57 +538,3 @@ class PlayerData:
 
 
 player_data = PlayerData()
-
-
-def welcome():
-    try:
-        with open("data/welcome.txt") as welcome_file:
-            input(welcome_file.read())
-    except FileNotFoundError:
-        print("Could not find welcome.txt file")
-
-
-def auction(square: Ownable) -> bool | tuple[Player, int]:
-    print(
-        "Input format: (player index), (amount of money)"
-        '\nExample: 1, 200; Enter "end" to end auction\n'
-    )
-    if square.COST % 20 != 0:
-        start_bid = 25
-    else:
-        start_bid = 20
-    player_high, highest_bid = -1, start_bid
-    print(f"Starting bid: ${start_bid}")
-    while True:
-        try:
-            option = input("Enter bid: ")
-            if option == "end":
-                break
-            option = option.split(", ")
-            player: Player = player_data.player_list[int(option[0]) - 1]
-            player_bid = int(option[1])
-
-            if player.balance < player_bid:
-                print("Not enough balance\n")
-                continue
-            if player_bid < highest_bid + start_bid:
-                print(f"Must be higher than highest bid by at least ${start_bid}\n")
-                continue
-
-            player_high = player
-            highest_bid = player_bid
-            print(f"New bid: ${highest_bid} by player {player_high.INDEX+1}")
-
-        except ValueError:
-            print("Invalid input\n")
-            continue
-        except IndexError:
-            print("Invalid player\n")
-            continue
-
-    if (player_high, highest_bid) == (-1, start_bid):
-        print("No one got the property")
-        return False
-
-    print(f"Player {player_high.INDEX+1} got the property!")
-    return player_high, highest_bid

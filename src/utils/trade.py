@@ -1,4 +1,8 @@
-from options.debug_cheats import *
+try:
+    from options.debug_cheats import *
+except ModuleNotFoundError:
+    print("Can't find options/debug_cheats.py")
+    raise SystemExit
 
 
 class PlayerType:
@@ -11,34 +15,55 @@ class PlayerType:
         self.color_sets: list[str] = []
 
 
-(sender_offer, receiver_offer, status, accepted,
- player_list, jailed_list, squares) = {}, {}, None, [], {}, {}, {}
+sender_offer, receiver_offer, status, accepted = {}, {}, None, []
+player_list, jailed_list, squares = {}, {}, {}
 sender: None | PlayerType = None
 receiver: None | PlayerType = None
 
 
-def start_trade(sender_, player_list_, jailed_list_, squares_):
-    global sender_offer, receiver_offer, accepted,\
-        sender, receiver, player_list, jailed_list, squares
-    sender, player_list, jailed_list, files = (
-        sender_, player_list_, jailed_list_, squares_)
+def set_globals(sender_, player_list_, jailed_list_, squares_):
+    global sender_offer, receiver_offer, status, accepted, sender, receiver
+    global player_list, jailed_list, squares
 
+    player_list, jailed_list, squares = player_list_, jailed_list_, squares_
+    sender = sender_
+    receiver = None
+    status = None
     sender_offer = {
         "property": {"street": [], "railroad": [], "utility": []},
         "money": 0,
         "goojf": 0,
     }
-    receiver_offer = {
+    receiver_offer = receiver_offer = {
         "property": {"street": [], "railroad": [], "utility": []},
         "money": 0,
         "goojf": 0,
     }
     accepted = [False, False]
 
+
+def set_side(sender_side, type_="player") -> PlayerType | dict | str:
+    if type_ == "player":
+        if sender_side:
+            return sender
+        return receiver
+    elif type_ == "offer":
+        if sender_side:
+            return sender_offer
+        return receiver_offer
+    elif type_ == "input":
+        if sender_side:
+            return input("\n[trade] Add to sender offer:")
+        return input("\n[trade] Add to receiver offer:")
+
+
+def start_trade(sender_, *databases):
+    set_globals(sender_, *databases)
+
     trade()
-    if status is None:
+    if not status:
         print("Trade canceled")
-    elif status is True:
+    elif status:
         apply_trade(sender, receiver, receiver_offer)
         apply_trade(receiver, sender, sender_offer)
         print("Trade successful")
@@ -46,31 +71,29 @@ def start_trade(sender_, player_list_, jailed_list_, squares_):
 
 def trade():
     global accepted, status
+
     determine_receiver()
     sender_side = True
     options = get_options(sender_side)
     while True:
-        if sender_side:
-            offer = sender_offer
-            category = input("\nAdd to sender offer:")
-        else:
-            offer = receiver_offer
-            category = input("\nAdd to receiver offer:")
+        player = set_side(sender_side)
+        player_offer = set_side(sender_side, "offer")
+        category = set_side(sender_side, "input")
         if category in options:
             category = category[0].casefold()
 
         match category:
             case "p":
-                property_trade(sender_side)
+                property_trade(player, player_offer)
             case "b":
-                money_trade(sender_side)
+                money_trade(player, player_offer)
             case "g":
-                goojf_trade(sender_side)
+                goojf_trade(jailed_list[set_side(sender_side).INDEX], player_offer)
             case "m":
                 return
             case "a":
-                review_trade(offer)
-                confirm = input("Are you sure?(y/[n]):")
+                review_trade(player_offer)
+                confirm = input("[trade] Are you sure?(y/[n]):")
                 try:
                     if confirm[0].casefold() != "y":
                         raise IndexError
@@ -98,13 +121,9 @@ def determine_receiver():
     while True:
         try:
             receiver = (
-                int(input("\nPlayer (index) you want to trade with:")) - 1
+                int(input("\n[trade] Player (index) you want to trade with:")) - 1
             )
-            if (
-                receiver not in player_list
-                or SINGLE_PLAYER
-                or receiver == sender.INDEX
-            ):
+            if receiver not in player_list or SINGLE_PLAYER or receiver == sender.INDEX:
                 raise ValueError
             receiver = player_list[receiver]
             return
@@ -114,17 +133,15 @@ def determine_receiver():
 
 
 def get_options(sender_side) -> list[str]:
-    if sender_side:
-        player = sender
-    else:
-        player = receiver
+    player = set_side(sender_side)
+    options = []
     print(
         '\nType "m" to return to last menu, "t" to switch trading sides,\n'
-        '"a" to accept/unaccept trade (Switches sides automatically)\n'
+        '"a" to accept/unaccept trade (Switches sides automatically)'
     )
-    options = []
+
     print("\nYou currently have:")
-    if player.properties:
+    if any(player.properties.values()):
         print("(p) _P_roperties")
         options.append("p")
     if sender.balance > 0:
@@ -138,9 +155,10 @@ def get_options(sender_side) -> list[str]:
 
 def property_options(prompt, player) -> list | None:
     options = []
+
     match prompt:
         case "t":
-            print("\nYou have these property types:")
+            print("You have these property types:")
             if any(
                 [
                     squares[street].improvement_level <= 0
@@ -177,21 +195,14 @@ def property_options(prompt, player) -> list | None:
                 print(f"{i+1}. {util.NAME}")
 
 
-def property_trade(sender_side):
-    if sender_side:
-        player = sender
-        player_offer = sender_offer
-    else:
-        player = receiver
-        player_offer = receiver_offer
-
+def property_trade(player, player_offer):
     while True:
         options = property_options("t", player)
-        option = input("\nSelect type:")[0].casefold()
+        option = input("\n[trade] Select type:")[0].casefold()
         if option == "m":
             break
         if option not in options:
-            print("Invalid type")
+            print("[trade] Invalid type")
             continue
         property_options(option, player)
         option = {"s": "street", "r": "railroad", "u": "utility"}[option]
@@ -201,9 +212,10 @@ def property_trade(sender_side):
 def property_select(player, player_offer, property_type):
     property_offer = player_offer["property"][property_type]
     properties = player.properties[property_type]
+
     while True:
         try:
-            option = input(f"\nSelect {property_type}:")
+            option = input(f"\n[trade] Select {property_type}:")
             if option == "m":
                 break
             option = int(option) - 1
@@ -220,45 +232,32 @@ def property_select(player, player_offer, property_type):
             continue
 
 
-def money_trade(sender_side):
-    if sender_side:
-        balance = sender.balance
-    else:
-        balance = receiver.balance
+def money_trade(player, player_offer):
+    balance = player.balance
 
     while True:
         try:
-            amount = abs(int(input("How much money?:")))
+            amount = abs(int(input("[trade] How much money?:")))
             if amount > balance:
                 raise ValueError
             break
         except ValueError:
             print("Invalid amount")
-    if sender_side:
-        sender_offer.update({"money": amount})
-    else:
-        receiver_offer.update({"money": amount})
+
+    player_offer.update({"money": amount})
     print(f"Money offer set to ${amount}")
 
 
-def goojf_trade(sender_side):
-    if sender_side:
-        jail_cell = jailed_list[sender.INDEX]
-    else:
-        jail_cell = jailed_list[receiver.INDEX]
-
+def goojf_trade(jail_cell, player_offer):
     while True:
         try:
-            amount = abs(int(input("How many GOOJF cards?:")))
+            amount = abs(int(input("[trade] How many GOOJF cards?:")))
             if amount > jail_cell["goojf"]:
                 raise ValueError
             break
         except ValueError:
             print("Invalid amount")
-    if sender_side:
-        sender_offer.update({"goojf": amount})
-    else:
-        receiver_offer.update({"goojf": amount})
+    player_offer.update({"goojf": amount})
     print(f"GOOJF cards offer set to {amount} card(s)")
 
 
@@ -281,9 +280,7 @@ def apply_trade(player, other, other_offer):
     other_goojf = jailed_list[other.INDEX]["goojf"]
 
     for property_type in player.properties:
-        player.properties[property_type].extend(
-            other_offer["property"][property_type]
-        )
+        player.properties[property_type].extend(other_offer["property"][property_type])
         other.properties[property_type] = [
             property_
             for property_ in other.properties[property_type]
@@ -295,5 +292,6 @@ def apply_trade(player, other, other_offer):
 
     player.balance += other_offer["money"]
     other.balance -= other_offer["money"]
+
     player_goojf += other_offer["goojf"]
     other_goojf -= other_offer["goojf"]

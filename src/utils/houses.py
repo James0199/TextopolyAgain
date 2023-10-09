@@ -6,7 +6,7 @@ def exchange(player, files):
             print("(b) _B_uy")
         if applicable_streets["sell"]:
             print("(s) _S_ell")
-        option = input("Enter option:")
+        option = input("[houses] Enter option:")
         if option:
             option = option[0].casefold()
         if option not in options:
@@ -35,19 +35,17 @@ def get_options(player, files, no_print=False) -> tuple[dict, list] | dict:
         for color in player.color_sets
     }
     for color in color_sets:
-        house_cap = max(
-            [street_.improvement_level for street_ in color_sets[color]]
-        )
+        house_cap = max([street_.improvement_level for street_ in color_sets[color]])
         for street in color_sets[color]:
             if (
-                    street.improvement_level <= 0
-                    or street.improvement_level + 1 <= house_cap
+                street.improvement_level <= 0
+                or street.improvement_level + 1 <= house_cap
             ):
                 applicable_streets["buy"].append(street)
                 continue
             elif (
-                    street.improvement_level >= 5
-                    or street.improvement_level > house_cap - 1
+                street.improvement_level >= 5
+                or street.improvement_level > house_cap - 1
             ):
                 applicable_streets["sell"].append(street)
                 continue
@@ -72,7 +70,7 @@ def house_action(applicable_streets, action, player):
     for i, street in enumerate(applicable_streets[action]):
         print(f"{i+1}. {street.NAME}")
     while True:
-        street_index = input("Select street:")
+        street_index = input("[houses] Select street:")
         if street_index == "m":
             break
         try:

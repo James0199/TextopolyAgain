@@ -1,7 +1,11 @@
 try:
+    eval("str | int")
     from textopoly import *
-except ImportError:
-    print("\nPlease download all files and use Python 3.10+\n")
+    from utils.misc import welcome
+except TypeError:
+    print("This project requires Python 3.10+")
+except ModuleNotFoundError:
+    print("\nPlease download all files.\n")
     raise SystemExit
 
 

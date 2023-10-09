@@ -1,5 +1,10 @@
-from options.debug_cheats import *
-from random import randint
+try:
+    from options.debug_cheats import *
+    from options.house_rules import QUICK_JAIL
+    from random import randint
+except ModuleNotFoundError:
+    print("Couldn't find a module")
+    raise SystemExit
 
 
 jailed_list: dict[int, dict[str, bool | int]] = {}
@@ -58,19 +63,28 @@ def jail_turn(player):
         options.append("f")
     print("[b] Pay $50 _b_ail")
 
-    option = input("Enter choice:")
+    option = input("[jail] Enter choice:")
     if option in options:
         option = option[0].casefold()
     match option:
         case "r":
-            input("\nRoll dice >")
+            input("\n[jail] Roll dice >")
             roll_one, roll_two = (randint(1, 6), randint(1, 6))
             print(f"1st: {roll_one} + 2nd: {roll_two} = {roll_one + roll_two}")
+
             if roll_one == roll_two:
                 print("You rolled a double!\nYou've been released")
                 get_out_of_jail(player, (roll_one, roll_two))
                 return
-            print("You didn't roll a double\nYou'll remain in Jail")
+
+            print("You didn't roll a double")
+            if QUICK_JAIL:
+                print("You've paid $50 to get out of jail")
+                player.balance -= 50
+                get_out_of_jail(player)
+                return
+
+            print("You'll remain in Jail")
             player_cell["jail_turns"] += 1
             return
         case "f":

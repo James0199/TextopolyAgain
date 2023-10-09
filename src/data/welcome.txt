@@ -2,8 +2,8 @@
 Welcome to Textopoly!
 
 Notes:
-- Press enter (return) to advance prompts.
-- Brackets when choosing options means it's the default choice
+- Answer (if asked) then press enter (return) to advance prompts
+- Options in brackets are the default choice
 - This project requires Python 3.10+
-  (match case, | union operator)
+  (match case, union operator)
 - Press ^C (Control-C) to exit the game

@@ -1,9 +1,10 @@
-from options.debug_cheats import *
+try:
+    from options.debug_cheats import *
+except ModuleNotFoundError:
+    print("Couldn't find options/debug_cheats.py")
 
 
 def load_files():
-    if not LOAD_FILES:
-        return
     global squares, COM_CHEST, CHANCE, PROPERTY_SETS
     try:
         with (
@@ -28,4 +29,6 @@ def dict_to_obj(dto_funct):
 
 
 COM_CHEST, CHANCE, PROPERTY_SETS, squares = {}, {}, {}, {}
-load_files()
+if LOAD_FILES:
+    load_files()
+BOARD_LENGTH = len(squares)
