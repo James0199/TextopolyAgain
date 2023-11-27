@@ -1,7 +1,8 @@
 def auction(square, player_list):
     print(
-        "Input format: (player index), (amount of money)"
-        '\nExample: 1, 200; Enter "end" to end auction\n'
+        'Enter "end" to end auction\n'
+        "Input format: (player index), (amount of money)\n"
+        "Example: 1, 200\n"
     )
     if square.COST % 20 != 0:
         start_bid = 25
@@ -10,9 +11,9 @@ def auction(square, player_list):
     player_high, highest_bid = -1, start_bid
     print(f"Starting bid: ${start_bid}")
     while True:
+        option = input("[auction] Enter bid:")
         try:
-            option = input("[auction] Enter bid:")
-            if option in ("end", ""):
+            if option[0].casefold() == "e":
                 break
             option = option.split(", ")
             player = player_list[int(option[0]) - 1]
@@ -29,11 +30,10 @@ def auction(square, player_list):
             highest_bid = player_bid
             print(f"New bid: ${highest_bid} by player {player_high.INDEX+1}")
 
-        except ValueError:
+        except (ValueError, IndexError):
+            if not option:
+                break
             print("Invalid input\n")
-            continue
-        except IndexError:
-            print("Invalid player\n")
             continue
 
     if (player_high, highest_bid) == (-1, start_bid):
@@ -42,11 +42,3 @@ def auction(square, player_list):
 
     print(f"Player {player_high.INDEX+1} got the property!")
     return player_high, highest_bid
-
-
-def welcome():
-    try:
-        with open("data/welcome.txt") as welcome_file:
-            input(welcome_file.read())
-    except FileNotFoundError:
-        print("Could not find welcome.txt file")

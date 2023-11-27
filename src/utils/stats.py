@@ -6,16 +6,17 @@ def main_stats(player, square):
     )
 
 
-def stat_options(player, player_list, squares):
+def stat_options(player, player_list: dict, squares: dict):
     print(
-        '\nType "m" to return to last menu\n'
-        "(p) View _p_layer stats\n"
-        "(s) View _s_quare (properties) stats"
+        "\n(p) View _p_layer stats\n"
+        "(s) View _s_quare (properties) stats\n"
+        "(b) View all squares' indexes (_b_oard)"
     )
     while True:
-        option = input("\n[stats] Enter option:")
-        if option:
-            option = option.casefold()[0]
+        option = input("[stats] Enter option:")
+        if not option:
+            return
+        option = option[0].casefold()
         match option:
             case "p":
                 print(f"\nYour player index: {player.INDEX+1}")
@@ -23,12 +24,12 @@ def stat_options(player, player_list, squares):
                 while True:
                     try:
                         player_select = input("[stats] Enter player (index):")
-                        if player_select[0].casefold() == "m":
+                        if not option:
                             break
 
                         player_select = player_list[int(player_select) - 1]
                         player_stats(vars(player_select).items(), squares)
-                    except (ValueError, IndexError):
+                    except (ValueError, IndexError, KeyError):
                         print("Invalid player")
             case "s":
                 player_properties = player.properties.values()
@@ -43,14 +44,20 @@ def stat_options(player, player_list, squares):
                         square_select = input(
                             "\n[stats] Enter square (property) index:"
                         )
-                        if square_select[0].casefold() == "m":
+                        if not square_select:
                             break
 
                         square_select = squares[int(square_select)]
                         square_stats(vars(square_select))
-                    except (ValueError, IndexError):
+                    except (ValueError, IndexError, KeyError):
                         print("Invalid square (property)")
-            case "m":
+            case "b":
+                print()
+                for i, square in squares.items():
+                    print(f"{i}: {square.NAME}")
+                    if i != 0 and i % 5 == 0:
+                        input("\n(More)")
+            case "":
                 break
             case _:
                 print("Invalid option")

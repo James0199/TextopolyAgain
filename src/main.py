@@ -1,7 +1,6 @@
 try:
     eval("str | int")
     from textopoly import *
-    from utils.misc import welcome
 except TypeError:
     print("This project requires Python 3.10+")
 except ModuleNotFoundError:
@@ -27,10 +26,12 @@ def main():
 
 if __name__ == "__main__":
     try:
-        if WELCOME_MESSAGE and LOAD_FILES:
-            welcome()
+        if WELCOME_MESSAGE:
+            print("\nWelcome to Textopoly(Again)!\n[Made by James0199]")
+            if LOAD_FILES:
+                input(files.HELP)
         player_data.player_setup()
         main()
     except KeyboardInterrupt:
-        print("\nGame Exited.")
+        print("\n\nGame Exited.")
         raise SystemExit

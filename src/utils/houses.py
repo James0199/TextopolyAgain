@@ -1,6 +1,5 @@
 def exchange(player, files):
     applicable_streets, options = get_options(player, files)
-    print('Type "m" to return to last menu')
     while True:
         if applicable_streets["buy"]:
             print("(b) _B_uy")
@@ -19,7 +18,7 @@ def exchange(player, files):
             case "s":
                 house_action(applicable_streets, "sell", player)
                 get_options(player, files, True)
-            case "m":
+            case "":
                 return
             case _:
                 print("Invalid option")
@@ -71,17 +70,14 @@ def house_action(applicable_streets, action, player):
         print(f"{i+1}. {street.NAME}")
     while True:
         street_index = input("[houses] Select street:")
-        if street_index == "m":
-            break
-        try:
-            street_index = int(street_index) - 1
-            if street_index not in range(len(applicable_streets[action])):
-                raise ValueError
-        except ValueError:
+        if not street_index:
+            return
+        street_index = int(street_index) - 1
+        if street_index not in range(len(applicable_streets[action])):
             print("Invalid INDEX")
             continue
-    if street_index == "m":
-        return
+        break
+
     selected_street = applicable_streets[action][street_index]
     if action == "buy":
         selected_street.improvement_level += 1

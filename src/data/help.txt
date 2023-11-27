@@ -1,0 +1,8 @@
+
+- (Answer if asked), Press enter to advance prompts
+- Options in brackets are the default choice
+- Leave blank and press enter to use default choice or return to last menu
+- Enter "h" to show this help file
+- Press ^C (Control-C) to exit the game
+
+Thanks patelheet30 for the challenge!

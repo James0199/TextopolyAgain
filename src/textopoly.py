@@ -3,7 +3,7 @@ try:
     from random import randint
     from options.debug_cheats import *
     from options.house_rules import *
-    from utils import files, jail, stats, mortgage, houses, trade, misc
+    from utils import files, jail, stats, mortgage, houses, trade, auction
 except ModuleNotFoundError:
     print("Couldn't find a module,\nPlease download all files.")
     raise SystemExit
@@ -134,10 +134,10 @@ class Ownable(Square, ABC):
 
         if option == "y" and player.balance - self.COST >= 0:
             self.receive_property(player, self.COST)
-            print(f"You have bought {self.NAME} for ${self.COST}")
+            print(f"You've bought {self.NAME} for ${self.COST}")
         elif NO_AUCTION_ONLY is None or NO_AUCTION_ONLY:
             print("\nAuction!")
-            status = misc.auction(self, player_data.player_list)
+            status = auction.auction(self, player_data.player_list)
             if status is False:
                 return
             player, bid = status
@@ -328,7 +328,6 @@ def square_dto(square: dict[str, str | int | None | bool | dict]) -> Square:
 
 
 files.dict_to_obj(square_dto)
-print("Loaded successfully!")
 
 
 class Player:
@@ -373,7 +372,7 @@ class Player:
             print()
             has_properties = any(self.properties.values())
             jail_cell = jail.jailed_list[self.INDEX]
-            options = ["v"]
+            options = ["v", "h"]
 
             if has_properties:
                 print("(m) _M_ortgage")
@@ -382,9 +381,9 @@ class Player:
                 print("(t) _T_rade")
                 options.append("t")
             if self.color_sets:
-                print("(h) Buy/sell _h_ouses")
+                print("(e) Buy/sell houses (_e_xchange)")
                 options.append("h")
-            print("(v) _V_iew stats")
+            print("(v) _V_iew stats\n(h) _H_elp")
             if turn_start:
                 print("[d] Roll _d_ice")
             else:
@@ -400,12 +399,17 @@ class Player:
                     mortgage.mortgage(self, files)
                 case "t":
                     trade.start_trade(
-                        self, player_data.player_list, jail.jailed_list, files
+                        self,
+                        player_data.player_list,
+                        jail.jailed_list,
+                        files.squares,
                     )
-                case "h":
+                case "e":
                     houses.exchange(self, files)
                 case "v":
                     stats.stat_options(self, player_data.player_list, files.squares)
+                case "h":
+                    input(files.HELP)
                 case _:
                     break
 
@@ -538,3 +542,4 @@ class PlayerData:
 
 
 player_data = PlayerData()
+print("Loaded successfully")

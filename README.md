@@ -2,7 +2,7 @@
 
 ## Description
 
-Over a year ago, I made a text-only clone of Monopoly in Python.  
+Over a year ago, I made a text-only clone of Monopoly in Python. (Textopoly)  
 After my fellow developer friend Patel (patelheet30) found out about it,  
 seeing how horribly written it is, challenged me to rewrite it better.  
 I felt that my Python skills have improved a lot since then, I accepted the challenge.  
@@ -10,9 +10,11 @@ Now that I've rewritten it, please rate it and suggest how I could improve it fu
 
 ## Running the Game
 
-Python 3.10+ is required to run the game.
+Python 3.10+ is required to run the game. (match case, union type operator)  
+(Get Python at https://www.python.org/downloads/)
 
-1. Download the zip file and extract it
+1. Download the zip file and extract it  
+   (In releases "Source code (zip)" or with "Code" button)
 2. Open ```cmd``` or ```Terminal``` and navigate to the project's src folder
    with ```cd```  
    (e.g. ```cd Donwloads/TextopolyAgain/src```)
@@ -28,7 +30,7 @@ They're located in the ```src/options``` folder:
 - ```debug_cheats.py```: Debugging and cheats
 - ```house_rules.py```: Common house rules
 
-Replace their default values with True, False
+Replace their default values with True, False  
 or with specified values in the comments below the options
 
 ## Fun Fact

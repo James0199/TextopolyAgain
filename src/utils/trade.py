@@ -43,18 +43,19 @@ def set_globals(sender_, player_list_, jailed_list_, squares_):
 
 
 def set_side(sender_side, type_="player") -> PlayerType | dict | str:
-    if type_ == "player":
-        if sender_side:
-            return sender
-        return receiver
-    elif type_ == "offer":
-        if sender_side:
-            return sender_offer
-        return receiver_offer
-    elif type_ == "input":
-        if sender_side:
-            return input("\n[trade] Add to sender offer:")
-        return input("\n[trade] Add to receiver offer:")
+    match type_:
+        case "player":
+            if sender_side:
+                return sender
+            return receiver
+        case "offer":
+            if sender_side:
+                return sender_offer
+            return receiver_offer
+        case "input":
+            if sender_side:
+                return input("\n[trade] Add to sender offer:")
+            return input("\n[trade] Add to receiver offer:")
 
 
 def start_trade(sender_, *databases):
@@ -62,7 +63,8 @@ def start_trade(sender_, *databases):
 
     trade()
     if not status:
-        print("Trade canceled")
+        print("Trade canceled.")
+        return
     elif status:
         apply_trade(sender, receiver, receiver_offer)
         apply_trade(receiver, sender, sender_offer)
@@ -73,14 +75,18 @@ def trade():
     global accepted, status
 
     determine_receiver()
+    if receiver == -1:
+        return
     sender_side = True
     options = get_options(sender_side)
     while True:
         player = set_side(sender_side)
         player_offer = set_side(sender_side, "offer")
         category = set_side(sender_side, "input")
-        if category in options:
+        if category:
             category = category[0].casefold()
+            if category not in options:
+                category = "_"
 
         match category:
             case "p":
@@ -89,7 +95,7 @@ def trade():
                 money_trade(player, player_offer)
             case "g":
                 goojf_trade(jailed_list[set_side(sender_side).INDEX], player_offer)
-            case "m":
+            case "":
                 return
             case "a":
                 review_trade(player_offer)
@@ -120,10 +126,12 @@ def determine_receiver():
     global receiver
     while True:
         try:
-            receiver = (
-                int(input("\n[trade] Player (index) you want to trade with:")) - 1
-            )
-            if receiver not in player_list or SINGLE_PLAYER or receiver == sender.INDEX:
+            receiver = input("\n[trade] Player (index) you want to trade with:")
+            if not receiver:
+                receiver = -1
+                return
+            receiver = int(receiver) - 1
+            if receiver not in player_list or receiver == sender.INDEX:
                 raise ValueError
             receiver = player_list[receiver]
             return
@@ -136,7 +144,7 @@ def get_options(sender_side) -> list[str]:
     player = set_side(sender_side)
     options = []
     print(
-        '\nType "m" to return to last menu, "t" to switch trading sides,\n'
+        '\nType "t" to switch trading sides,\n'
         '"a" to accept/unaccept trade (Switches sides automatically)'
     )
 
@@ -155,10 +163,9 @@ def get_options(sender_side) -> list[str]:
 
 def property_options(prompt, player) -> list | None:
     options = []
-
     match prompt:
         case "t":
-            print("You have these property types:")
+            print("\nYou have these property types:")
             if any(
                 [
                     squares[street].improvement_level <= 0
@@ -172,6 +179,7 @@ def property_options(prompt, player) -> list | None:
                 options.append("r")
             elif player.properties["utility"]:
                 print("(u) _U_tility")
+                options.append("u")
             return options
         case "s":
             print("\nYou have these applicable street(s):")
@@ -198,11 +206,12 @@ def property_options(prompt, player) -> list | None:
 def property_trade(player, player_offer):
     while True:
         options = property_options("t", player)
-        option = input("\n[trade] Select type:")[0].casefold()
-        if option == "m":
+        option = input("\n[trade] Select type:")
+        if not option:
             break
+        option = option[0].casefold()
         if option not in options:
-            print("[trade] Invalid type")
+            print("Invalid type")
             continue
         property_options(option, player)
         option = {"s": "street", "r": "railroad", "u": "utility"}[option]
@@ -216,7 +225,7 @@ def property_select(player, player_offer, property_type):
     while True:
         try:
             option = input(f"\n[trade] Select {property_type}:")
-            if option == "m":
+            if not option:
                 break
             option = int(option) - 1
             if option not in range(len(properties)):
@@ -234,10 +243,12 @@ def property_select(player, player_offer, property_type):
 
 def money_trade(player, player_offer):
     balance = player.balance
-
     while True:
+        amount = input("[trade] How much money?:")
+        if not amount:
+            return
         try:
-            amount = abs(int(input("[trade] How much money?:")))
+            amount = abs(int(amount))
             if amount > balance:
                 raise ValueError
             break
@@ -250,8 +261,11 @@ def money_trade(player, player_offer):
 
 def goojf_trade(jail_cell, player_offer):
     while True:
+        amount = input("[trade] How many GOOJF cards?:")
+        if not amount:
+            return
         try:
-            amount = abs(int(input("[trade] How many GOOJF cards?:")))
+            amount = abs(int(amount))
             if amount > jail_cell["goojf"]:
                 raise ValueError
             break
